@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace ShipInventory.Helpers;
+namespace LethalBingo.Helpers;
 
 /// <summary>
 /// Helper to load a bundle

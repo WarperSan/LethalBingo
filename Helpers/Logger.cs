@@ -1,6 +1,6 @@
 ﻿using BepInEx.Logging;
 
-namespace ShipInventory.Helpers;
+namespace LethalBingo.Helpers;
 
 /// <summary>
 /// Helper to log things from this mod

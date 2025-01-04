@@ -1,47 +1,45 @@
 using BepInEx;
-using BepInEx.Logging;
 using HarmonyLib;
-using LobbyCompatibility.Attributes;
-using LobbyCompatibility.Enums;
+using LethalBingo.Helpers;
+using LethalBingo.Objects;
 
 namespace LethalBingo;
 
 [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
-[BepInDependency("BMX.LobbyCompatibility", BepInDependency.DependencyFlags.HardDependency)]
-[LobbyCompatibility(CompatibilityLevel.ClientOnly, VersionStrictness.None)]
 public class LethalBingo : BaseUnityPlugin
 {
-    public static LethalBingo Instance { get; private set; } = null!;
-    internal new static ManualLogSource Logger { get; private set; } = null!;
-    internal static Harmony? Harmony { get; set; }
-
+    public static BingoClient? CurrentClient;
+    
     private void Awake()
     {
-        Logger = base.Logger;
-        Instance = this;
+        Helpers.Logger.SetLogger(Logger);
 
-        Patch();
+        // Load bundle
+        if (!Bundle.LoadBundle("LethalBingo.Resources.lb-bundle"))
+        {
+            Helpers.Logger.Error("Failed to load the bundle. This mod will not continue further.");
+            return;
+        }
+        
+        ApplyPatches();
 
         Logger.LogInfo($"{MyPluginInfo.PLUGIN_GUID} v{MyPluginInfo.PLUGIN_VERSION} has loaded!");
     }
 
-    internal static void Patch()
+    #region Patches
+
+    private Harmony? _harmony;
+
+    private void ApplyPatches()
     {
-        Harmony ??= new Harmony(MyPluginInfo.PLUGIN_GUID);
+        Helpers.Logger.Debug("Applying patches...");
 
-        Logger.LogDebug("Patching...");
+        _harmony ??= new Harmony(MyPluginInfo.PLUGIN_GUID);
 
-        Harmony.PatchAll();
+        _harmony.PatchAll();
 
-        Logger.LogDebug("Finished patching!");
+        Helpers.Logger.Debug("Finished applying patches!");
     }
 
-    internal static void Unpatch()
-    {
-        Logger.LogDebug("Unpatching...");
-
-        Harmony?.UnpatchSelf();
-
-        Logger.LogDebug("Finished unpatching!");
-    }
+    #endregion
 }
