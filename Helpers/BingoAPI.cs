@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using LethalBingo.Extensions;
 using LethalBingo.Objects;
+using Newtonsoft.Json.Linq;
 using UnityEngine.Networking;
 
 namespace LethalBingo.Helpers;
@@ -17,6 +18,7 @@ public static class BingoAPI
     public const string SOCKETS_URL = "wss://sockets.bingosync.com/broadcast";
     private const string BINGO_URL = "https://bingosync.com";
     private const string JOIN_ROOM_URL = BINGO_URL + "/api/join-room";
+    private const string GET_BOARD_URL = BINGO_URL + "/room/{0}/board";
     private const string CHANGE_TEAM_URL = BINGO_URL + "/api/color";
     private const string SELECT_SQUARE_URL = BINGO_URL + "/api/select";
     private const string SEND_MESSAGE_URL = BINGO_URL + "/api/chat";
@@ -28,7 +30,7 @@ public static class BingoAPI
     /// <param name="roomPassword">Password of the room</param>
     /// <param name="nickName">Nickname of the user</param>
     /// <param name="isSpectator">Is the user a spectator or not</param>
-    public static async Task<BingoClient?> JoinRoom(string roomId, string roomPassword, string nickName, bool isSpectator = true)
+    public static async Task<bool> JoinRoom(string roomId, string roomPassword, string nickName, bool isSpectator = true)
     {
         Logger.Debug($"Joining the room '{roomId}'...");
         
@@ -46,7 +48,7 @@ public static class BingoAPI
         if (response.HasFailed())
         {
             response.PrintError($"Failed to join room '{roomId}'");
-            return null;
+            return false;
         }
 
         var responseJson = response.GetJSON();
@@ -55,7 +57,7 @@ public static class BingoAPI
         if (socket == null)
         {
             Logger.Error("Failed to create the socket.");
-            return null;
+            return false;
         }
         
         Logger.Debug("Room joined!");
@@ -68,12 +70,51 @@ public static class BingoAPI
         if (!connected)
         {
             Logger.Error("Could not connect before the timeout.");
-            return null;
+            return false;
         }
         
         Logger.Debug("Client successfully connected!");
 
-        return client;
+        LethalBingo.CurrentClient = client;
+
+        return true;
+    }
+
+    /// <summary>
+    /// Fetches the current board of the given room
+    /// </summary>
+    /// <param name="roomId">ID of the room</param>
+    public static async Task<SquareData[]?> GetBoard(string roomId)
+    {
+        Logger.Debug($"Obtaining the board of the room '{roomId}'...");
+        
+        var url = string.Format(GET_BOARD_URL, roomId);
+
+        var response = await Network.RequestAsync(url, HttpMethod.Get);
+        
+        if (response.HasFailed())
+        {
+            response.PrintError($"Failed to obtain the board of the room '{roomId}'");
+            return null;
+        }
+
+        Logger.Debug($"Board successfully obtained from the room '{roomId}'!");
+
+        var json = response.GetJSON<JArray>();
+
+        if (json == null)
+            return [];
+        
+        var squares = new SquareData[json.Count];
+
+        var index = 0;
+        foreach (var square in json.Children())
+        {
+            squares[index] = SquareData.ParseJSON(square);
+            index++;
+        }
+
+        return squares;
     }
 
     /// <summary>
@@ -194,5 +235,39 @@ public static class BingoAPI
         }
 
         return true;
+    }
+}
+
+public struct PlayerData
+{
+    public string? UUID;
+    public string? Name;
+    public BingoTeam Team;
+    public bool IsSpectator;
+
+    public static PlayerData ParseJSON(JToken? obj) => new()
+    {
+        UUID = obj?.Value<string>("uuid"),
+        Name = obj?.Value<string>("name"),
+        Team = obj?.Value<string>("color").GetTeam() ?? BingoTeam.BLANK,
+        IsSpectator = obj?.Value<bool>("is_spectator") ?? false
+    };
+}
+
+public struct SquareData
+{
+    public string? Name;
+    public int Index;
+    public BingoTeam[] Teams;
+
+    public static SquareData ParseJSON(JToken? obj)
+    {
+        var slot = obj?.Value<string>("slot")?.Replace("slot", "");
+        return new SquareData
+        {
+            Name = obj?.Value<string>("name"),
+            Index = slot != null && int.TryParse(slot, out var index) ? index : 0,
+            Teams = obj?.Value<string>("colors").GetTeams() ?? []
+        };
     }
 }

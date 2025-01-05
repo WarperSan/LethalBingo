@@ -1,4 +1,5 @@
 using LethalBingo.Helpers;
+using LethalBingo.Objects;
 using Steamworks;
 using TMPro;
 using UnityEngine;
@@ -25,8 +26,6 @@ namespace LethalBingo.UI.Forms
         [SerializeField] private Button? openBtn;
 
         [SerializeField] private Button? closeBtn;
-
-        [SerializeField] private BingoStateForm? stateForm;
 
         #endregion
 
@@ -86,20 +85,11 @@ namespace LethalBingo.UI.Forms
 
         private async void TryConnect(string code, string password, string nickname, bool isSpectator)
         {
-            var client = await BingoAPI.JoinRoom(code, password, nickname, isSpectator);
-
-            if (client == null)
-            {
-                _menuManager?.DisplayMenuNotification("An error has occured while joining the room.", "Okay");
-                SetActiveJoinForm(true);
+            if (await BingoAPI.JoinRoom(code, password, nickname, isSpectator))
                 return;
-            }
-
-            LockForm();
-            stateForm?.UnlockForm();
-
-            _menuManager?.DisplayMenuNotification("You successfully joined the room.", "Okay");
-            LethalBingo.CurrentClient = client;
+            
+            _menuManager?.DisplayMenuNotification("An error has occured while joining the room.", "Okay");
+            SetActiveJoinForm(true);
         }
 
         #endregion
@@ -110,24 +100,28 @@ namespace LethalBingo.UI.Forms
         private Animator? animator;
 
         private void OpenForm() => animator?.SetTrigger(OpenMenu);
+        private void CloseForm() => animator?.SetTrigger(CloseMenu);
 
-        public void UnlockForm()
+        private static readonly int OpenMenu = Animator.StringToHash("openMenu");
+        private static readonly int CloseMenu = Animator.StringToHash("closeMenu");
+
+        #endregion
+
+        #region Events
+
+        private void OnConnected(string? roomId, PlayerData player)
+        {
+            CloseForm();
+            openBtn?.gameObject.SetActive(false);
+            
+            _menuManager?.DisplayMenuNotification("You successfully joined the room.", "Okay");
+        }
+
+        private void OnDisconnected()
         {
             OpenForm();
             openBtn?.gameObject.SetActive(true);
         }
-
-
-        private void CloseForm() => animator?.SetTrigger(CloseMenu);
-
-        public void LockForm()
-        {
-            CloseForm();
-            openBtn?.gameObject.SetActive(false);
-        }
-
-        private static readonly int OpenMenu = Animator.StringToHash("openMenu");
-        private static readonly int CloseMenu = Animator.StringToHash("closeMenu");
 
         #endregion
 
@@ -147,6 +141,18 @@ namespace LethalBingo.UI.Forms
 
             if (userNickname != null && SteamClient.IsValid)
                 userNickname.text = new Friend(SteamClient.SteamId.Value).Name;
+        }
+
+        private void OnEnable()
+        {
+            BingoClient.OnSelfConnected.AddListener(OnConnected);
+            BingoClient.OnSelfDisconnected.AddListener(OnDisconnected);
+        }
+
+        private void OnDisable()
+        {
+            BingoClient.OnSelfConnected.RemoveListener(OnConnected);
+            BingoClient.OnSelfDisconnected.RemoveListener(OnDisconnected);
         }
     }
 }

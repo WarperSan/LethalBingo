@@ -10,7 +10,7 @@ internal class HUDManager_Patches
     private static void SendMessageToWeb(HUDManager __instance, string chatMessage, int playerId = -1)
     {
         // If message from system, skip
-        if (playerId < 0)
+        if (playerId == -1)
             return;
         
         // If no client, skip

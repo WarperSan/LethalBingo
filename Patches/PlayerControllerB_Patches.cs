@@ -1,7 +1,5 @@
 ﻿using GameNetcodeStuff;
 using HarmonyLib;
-using LethalBingo.Helpers;
-using LethalBingo.Objects;
 using UnityEngine;
 using Logger = LethalBingo.Helpers.Logger;
 
@@ -53,15 +51,11 @@ internal class PlayerControllerB_Patches
         return bingoParent.transform;
     }
 
-    private static BingoBoard? CreateBoard(Transform parent)
+    private static void CreateBoard(Transform parent)
     {
-        var boardPrefab = Bundle.LoadAsset<GameObject>(Constants.BINGO_BOARD_PREFAB);
+        if (LethalBingo.BINGO_BOARD_PREFAB is null) 
+            return;
 
-        if (boardPrefab is null)
-            return null;
-
-        var newBoard = Object.Instantiate(boardPrefab, parent, false);
-
-        return newBoard?.AddComponent<BingoBoard>();
+        Object.Instantiate(LethalBingo.BINGO_BOARD_PREFAB, parent, false);
     }
 }

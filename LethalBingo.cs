@@ -2,6 +2,7 @@ using BepInEx;
 using HarmonyLib;
 using LethalBingo.Helpers;
 using LethalBingo.Objects;
+using UnityEngine;
 
 namespace LethalBingo;
 
@@ -20,7 +21,8 @@ public class LethalBingo : BaseUnityPlugin
             Helpers.Logger.Error("Failed to load the bundle. This mod will not continue further.");
             return;
         }
-        
+
+        PreparePrefabs();
         ApplyPatches();
 
         Logger.LogInfo($"{MyPluginInfo.PLUGIN_GUID} v{MyPluginInfo.PLUGIN_VERSION} has loaded!");
@@ -39,6 +41,25 @@ public class LethalBingo : BaseUnityPlugin
         _harmony.PatchAll();
 
         Helpers.Logger.Debug("Finished applying patches!");
+    }
+
+    #endregion
+
+    #region Prefabs
+
+    public static GameObject? BINGO_JOIN_FORM_PREFAB;
+    public static GameObject? BINGO_STATE_FORM_PREFAB;
+    public static GameObject? BINGO_BOARD_PREFAB;
+    
+    private static void PreparePrefabs()
+    {
+        Helpers.Logger.Debug("Preparing prefabs...");
+
+        BINGO_JOIN_FORM_PREFAB = Bundle.LoadAsset<GameObject>("BingoJoinForm");
+        BINGO_STATE_FORM_PREFAB = Bundle.LoadAsset<GameObject>("BingoStateForm");
+        BINGO_BOARD_PREFAB = Bundle.LoadAsset<GameObject>("BingoBoard");
+        
+        Helpers.Logger.Debug("Finished preparing prefabs!");
     }
 
     #endregion

@@ -12,6 +12,8 @@ namespace LethalBingo.Helpers;
 
 public static class Network
 {
+    #region WebRequest
+
     /// <summary>
     /// Checks if the given response has failed
     /// </summary>
@@ -21,18 +23,23 @@ public static class Network
     /// <summary>
     /// Fetches the JSON object from the given response
     /// </summary>
-    public static JObject? GetJSON(this UnityWebRequest response)
+    public static T? GetJSON<T>(this UnityWebRequest response)
     {
         string text = response.downloadHandler.text.Trim();
 
         if (!text.StartsWith("[") && !text.StartsWith("{"))
         {
             Logger.Error($"Expected JSON, but received: {text}");
-            return null;
+            return default;
         }
         
-        return JsonConvert.DeserializeObject<JObject>(text);
+        return JsonConvert.DeserializeObject<T>(text);
     }
+
+    /// <summary>
+    /// Fetches the JSON object from the given response
+    /// </summary>
+    public static JObject? GetJSON(this UnityWebRequest response) => response.GetJSON<JObject>();
 
     /// <summary>
     /// Prints the error from the given response
@@ -63,31 +70,18 @@ public static class Network
     }
 
     /// <summary>
-    /// Sends a request to the given URI using the given method
+    /// Sends a request to the given URI using the given method with or without a payload
     /// </summary>
-    public static Task<UnityWebRequest> RequestAsync(string requestUri, HttpMethod method)
-    {
-        return Task.Run(async () =>
-        {
-            var req = UnityWebRequest.Get(requestUri).SendWebRequest();
-            
-            while (!req.isDone)
-                await Task.Delay(25);
-
-            return req.webRequest;
-        });
-    }
-
-    /// <summary>
-    /// Sends a request to the given URI using the given method and with the given JSON payload
-    /// </summary>
-    public static Task<UnityWebRequest> RequestAsJsonAsync(string requestUri, object value, HttpMethod method)
+    private static Task<UnityWebRequest> SendRequestAsync(string requestUri, HttpMethod method, object? payload)
     {
         UnityWebRequest request = new UnityWebRequest(requestUri, method.Method);
+
+        if (payload != null)
+        {
+            var json = JsonConvert.SerializeObject(payload);
+            request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json));
+        }
         
-        var json = JsonConvert.SerializeObject(value);
-        
-        request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json));
         request.downloadHandler = new DownloadHandlerBuffer();
         request.SetRequestHeader("Content-Type", "application/json");
 
@@ -101,6 +95,20 @@ public static class Network
             return req.webRequest;
         });
     }
+
+    /// <summary>
+    /// Sends a request to the given URI using the given method
+    /// </summary>
+    public static Task<UnityWebRequest> RequestAsync(string requestUri, HttpMethod method) 
+        => SendRequestAsync(requestUri, method, null);
+
+    /// <summary>
+    /// Sends a request to the given URI using the given method and with the given JSON payload
+    /// </summary>
+    public static Task<UnityWebRequest> RequestAsJsonAsync(string requestUri, object value, HttpMethod method)
+        => SendRequestAsync(requestUri, method, value);
+
+    #endregion
 
     #region Socket
 

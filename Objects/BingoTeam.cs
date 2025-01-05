@@ -1,5 +1,8 @@
-﻿namespace LethalBingo.Objects;
+﻿using System;
 
+namespace LethalBingo.Objects;
+
+[Flags]
 public enum BingoTeam: ushort
 {
     // No team

@@ -1,5 +1,5 @@
 ﻿using HarmonyLib;
-using LethalBingo.Helpers;
+using LethalBingo.Extensions;
 using UnityEngine;
 using Logger = LethalBingo.Helpers.Logger;
 
@@ -10,10 +10,7 @@ internal class MenuManager_Patches
 {
     [HarmonyPostfix]
     [HarmonyPatch(nameof(MenuManager.Start))]
-    private static void CreateUI(MenuManager __instance)
-    {
-        BuildUI();
-    }
+    private static void CreateUI(MenuManager __instance) => BuildUI();
 
     private static void BuildUI()
     {
@@ -26,23 +23,26 @@ internal class MenuManager_Patches
             return;
         }
         
-        // Fetch prefab
-        var prefab = Bundle.LoadAsset<GameObject>(Constants.BINGO_UI_PREFAB);
+        // Create ui
+        var ui = new GameObject(nameof(LethalBingo) + "_UI");
+        ui.transform.SetParent(container.transform, false);
 
-        if (prefab == null)
-        {
-            Logger.Error("Could not load the UI for the bingo.");
-            return;
-        }
-
-        // Create menu
-        var menu = Object.Instantiate(prefab, container.transform, false);
-
-        if (menu == null) return;
-
+        ui.AddComponent<RectTransform>().FillParent();
+        
         var index = container.transform.Find("LobbyHostSettings")?.GetSiblingIndex() ?? -1;
         
         if (index != -1)
-            menu.transform.SetSiblingIndex(index);
+            ui.transform.SetSiblingIndex(index);
+        
+        // Create forms
+        if (LethalBingo.BINGO_JOIN_FORM_PREFAB != null)
+            Object.Instantiate(LethalBingo.BINGO_JOIN_FORM_PREFAB, ui.transform, false);
+        else
+            Logger.Error("Could not spawn the join form.");
+
+        if (LethalBingo.BINGO_STATE_FORM_PREFAB != null)
+            Object.Instantiate(LethalBingo.BINGO_STATE_FORM_PREFAB, ui.transform, false);
+        else
+            Logger.Error("Could not spawn the state form.");
     }
 }

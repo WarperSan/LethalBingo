@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using LethalBingo.Objects;
+using UnityEngine;
 
 namespace LethalBingo.Extensions;
 
@@ -15,10 +17,52 @@ public static class BingoTeamExtension
     /// </summary>
     public static BingoTeam GetTeam(this string? name)
     {
-        if (name == null)
+        if (string.IsNullOrEmpty(name))
             return BingoTeam.BLANK;
 
-        return Enum.TryParse(name.ToUpper(), out BingoTeam team) ? team : BingoTeam.BLANK;
+        return Enum.TryParse(name.ToUpper(), out BingoTeam _team) ? _team : BingoTeam.BLANK;
+    }
+
+    /// <summary>
+    /// Fetches the teams with the given name
+    /// </summary>
+    public static BingoTeam[] GetTeams(this string? name)
+    {
+        if (string.IsNullOrEmpty(name))
+            return [];
+
+        var teams = new List<BingoTeam>();
+
+        foreach (var color in name.Split(" "))
+        {
+            var _team = color.GetTeam();
+            
+            if (_team == BingoTeam.BLANK)
+                continue;
+            
+            teams.Add(_team);
+        }
+
+        return teams.ToArray();
+    }
+
+    /// <summary>
+    /// Fetches all the teams
+    /// </summary>
+    public static BingoTeam[] GetAllTeams()
+    {
+        var array = Enum.GetValues(typeof(BingoTeam));
+        var teams = new List<BingoTeam>();
+
+        foreach (BingoTeam team in array)
+        {
+            if (team == BingoTeam.BLANK)
+                continue;
+            
+            teams.Add(team);
+        }
+
+        return teams.ToArray();
     }
 
     /// <summary>
@@ -52,5 +96,17 @@ public static class BingoTeamExtension
             default:
                 return "#FFFFFF";
         }
+    }
+
+    /// <summary>
+    /// Fetches the color of the given team
+    /// </summary>
+    public static Color GetColor(this BingoTeam team)
+    {
+        var hex = team.GetHexColor();
+
+        if (ColorUtility.DoTryParseHtmlColor(hex, out var color))
+            return color;
+        return Color.white;
     }
 }

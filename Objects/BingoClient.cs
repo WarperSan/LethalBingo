@@ -4,21 +4,26 @@ using System.Threading.Tasks;
 using LethalBingo.Extensions;
 using LethalBingo.Helpers;
 using Newtonsoft.Json.Linq;
+using UnityEngine.Events;
 
 namespace LethalBingo.Objects;
 
 // ReSharper disable once ClassWithVirtualMembersNeverInherited.Global
 public class BingoClient
 {
-    protected string? roomId { get; private set; }
-    protected string? playerUUID { get; private set; }
-    protected BingoTeam team { get; private set; }
+    public string? roomId { get; private set; }
+    public PlayerData PlayerData { get; protected set; }
 
     internal BingoClient(ClientWebSocket socket)
     {
         roomId = null;
-        playerUUID = null;
-        team = BingoTeam.BLANK;
+        PlayerData = new PlayerData
+        {
+            UUID = null,
+            Name = null,
+            Team = BingoTeam.BLANK,
+            IsSpectator = true
+        };
         this.socket = socket;
 
         _ = socket.HandleMessages(OnSocketReceived);
@@ -27,6 +32,21 @@ public class BingoClient
     #region Socket
 
     private readonly ClientWebSocket socket;
+
+    // ReSharper disable ArrangeObjectCreationWhenTypeNotEvident
+    public static readonly UnityEvent<string?, PlayerData> OnSelfConnected = new();
+    public static readonly UnityEvent<string?, PlayerData> OnOtherConnected = new();
+    public static readonly UnityEvent OnSelfDisconnected = new();
+    public static readonly UnityEvent<string?, PlayerData> OnOtherDisconnected = new();
+    public static readonly UnityEvent<SquareData> OnSelfMarked = new();
+    public static readonly UnityEvent<SquareData> OnOtherMarked = new();
+    public static readonly UnityEvent<SquareData> OnSelfCleared = new();
+    public static readonly UnityEvent<SquareData> OnOtherCleared = new();
+    public static readonly UnityEvent<PlayerData, string, ulong> OnSelfChatted = new();
+    public static readonly UnityEvent<PlayerData, string, ulong> OnOtherChatted = new();
+    public static readonly UnityEvent<BingoTeam, BingoTeam> OnSelfTeamChanged = new();
+    public static readonly UnityEvent<BingoTeam, BingoTeam> OnOtherTeamChanged = new();
+    // ReSharper restore ArrangeObjectCreationWhenTypeNotEvident
 
     public async Task<bool> WaitForConnection(float timeoutMS)
     {
@@ -47,14 +67,38 @@ public class BingoClient
         Logger.Info(json);
         
         var type = json.Value<string>("type");
+        var playerData = PlayerData.ParseJSON(json.GetValue("player"));
 
         switch (type)
         {
             case "connection":
-                HandleConnection(json);
+                var eventType = json.Value<string>("event_type");
+                
+                switch (eventType)
+                {
+                    case "connected":
+                        HandleConnectedEvent(json, playerData);
+                        break;
+                    case "disconnected":
+                        HandleDisconnectedEvent(json, playerData);
+                        break;
+                }
                 return;
             case "chat":
-                HandleIncomingMessage(json);
+                HandleChatEvent(json, playerData);
+                return;
+            case "color":
+                HandleColorEvent(playerData);
+                return;
+            case "goal":
+                var goal = json.GetValue("square");
+                var remove = goal?.Value<bool>("remove") ?? false;
+                var squareData = SquareData.ParseJSON(goal);
+                
+                if (remove)
+                    HandleClearedEvent(squareData, playerData);
+                else
+                    HandleMarkedEvent(squareData, playerData);
                 return;
             default:
                 Logger.Error($"Unhandled response: {json}");
@@ -62,27 +106,93 @@ public class BingoClient
         }
     }
 
-    private void HandleConnection(JObject connection)
+    private void HandleConnectedEvent(JObject connected, PlayerData data)
     {
-        var eventType = connection.Value<string>("event_type");
-        
-        if (eventType != "connected")
-            return;
+        var _roomId = connected.Value<string>("room");
         
         if (roomId == null)
-            OnSelfConnect(connection);
+        {
+            OnSelfConnect(_roomId, data);
+            OnSelfConnected.Invoke(_roomId, data);
+        }
         else
-            OnOtherConnect(connection);
+        {
+            OnOtherConnect(_roomId, data);
+            OnOtherConnected.Invoke(_roomId, data);
+        }
     }
 
-    private void HandleIncomingMessage(JObject message)
+    private void HandleDisconnectedEvent(JObject disconnected, PlayerData data)
     {
-        var uuid = message.GetValue("player")?.Value<string>("uuid");
+        var _roomId = disconnected.Value<string>("room");
         
-        if (playerUUID == uuid)
-            OnSelfMessageReceived(message);
+        if (roomId != null)
+        {
+            OnOtherDisconnect(_roomId, data);
+            OnOtherDisconnected.Invoke(_roomId, data);
+        }
+    }
+    
+    private void HandleChatEvent(JObject message, PlayerData data)
+    {
+        var content = message.Value<string>("text") ?? "";
+        var timestamp = message.Value<ulong>("timestamp");
+        
+        if (PlayerData.UUID == data.UUID)
+        {
+            OnSelfMessageReceived(data, content, timestamp);
+            OnSelfChatted.Invoke(data, content, timestamp);
+        }
         else
-            OnOtherMessageReceived(message);
+        {
+            OnOtherMessageReceived(data, content, timestamp);
+            OnOtherChatted.Invoke(data, content, timestamp);
+        }
+    }
+
+    private void HandleColorEvent(PlayerData data)
+    {
+        var newColor = data.Team;
+        var oldTeam = PlayerData.Team;
+
+        if (PlayerData.UUID == data.UUID)
+        {
+            OnSelfTeamChange(oldTeam, newColor);
+            OnSelfTeamChanged.Invoke(oldTeam, newColor);
+        }
+        else
+        {
+            OnSelfTeamChange(oldTeam, newColor);
+            OnOtherTeamChanged.Invoke(oldTeam, newColor);
+        }
+    }
+
+    private void HandleMarkedEvent(SquareData square, PlayerData player)
+    {
+        if (PlayerData.UUID == player.UUID)
+        {
+            OnSelfMark(square);
+            OnSelfMarked.Invoke(square);
+        }
+        else
+        {
+            OnOtherMark(square);
+            OnOtherMarked.Invoke(square);
+        }
+    }
+
+    private void HandleClearedEvent(SquareData square, PlayerData player)
+    {
+        if (PlayerData.UUID == player.UUID)
+        {
+            OnSelfClear(square);
+            OnSelfCleared.Invoke(square);
+        }
+        else
+        {
+            OnOtherClear(square);
+            OnOtherCleared.Invoke(square);
+        }
     }
     
     #endregion
@@ -92,61 +202,125 @@ public class BingoClient
     /// <summary>
     /// Called when this client gets connected to the room
     /// </summary>
-    protected virtual void OnSelfConnect(JObject connection)
+    protected virtual void OnSelfConnect(string? _roomId, PlayerData player)
     {
-        roomId = connection.Value<string>("room");
-        playerUUID = connection.GetValue("player")?.Value<string>("uuid");
-        team = connection.Value<string>("player_color").GetTeam();
+        roomId = _roomId;
+        PlayerData = player;
     }
 
     /// <summary>
     /// Called when another client gets connected to the room
     /// </summary>
-    protected virtual void OnOtherConnect(JObject connection) { /* DO NOTHING */ }
+    protected virtual void OnOtherConnect(string? _roomId, PlayerData player) { /* DO NOTHING */ }
 
+    /// <summary>
+    /// Called when this client gets disconnected to the room
+    /// </summary>
+    protected virtual void OnSelfDisconnect()
+    {
+        LethalBingo.CurrentClient = null;
+        roomId = null;
+        PlayerData = new PlayerData
+        {
+            UUID = null,
+            Name = null,
+            Team = BingoTeam.BLANK,
+            IsSpectator = true
+        };
+    }
+    
+    /// <summary>
+    /// Called when another client gets disconnected to the room
+    /// </summary>
+    protected virtual void OnOtherDisconnect(string? _roomId, PlayerData player) { /* DO NOTHING */ }
+
+    /// <summary>
+    /// Called when this client marks a square
+    /// </summary>
+    protected virtual void OnSelfMark(SquareData square) { /* DO NOTHING */ }
+
+    /// <summary>
+    /// Called when another client marks a square
+    /// </summary>
+    protected virtual void OnOtherMark(SquareData square) { /* DO NOTHING */ }
+
+    /// <summary>
+    /// Called when this client clears a square
+    /// </summary>
+    protected virtual void OnSelfClear(SquareData square) { /* DO NOTHING */ }
+
+    /// <summary>
+    /// Called when another client clears a square
+    /// </summary>
+    protected virtual void OnOtherClear(SquareData square) { /* DO NOTHING */ }
+    
     /// <summary>
     /// Called when this client sends a message to the room
     /// </summary>
-    protected virtual void OnSelfMessageReceived(JObject message) { /* DO NOTHING */ }
+    protected virtual void OnSelfMessageReceived(PlayerData player, string content, ulong timestamp) { /* DO NOTHING */ }
     
     /// <summary>
     /// Called when another client sends a message to the room
     /// </summary>
-    protected virtual void OnOtherMessageReceived(JObject message)
+    protected virtual void OnOtherMessageReceived(PlayerData player, string content, ulong timestamp)
     {
         if (HUDManager.Instance == null)
             return;
 
-        var content = message.Value<string>("text");
+        content = content.Trim();
 
-        if (content == null)
+        if (content.Length == 0)
             return;
-        
-        var teamColor = message.Value<string>("player_color").GetTeam().GetHexColor();
 
-        var player = message.GetValue("player")?.Value<string>("name") ?? "???";
+        var teamColor = player.Team.GetHexColor();
         
-        HUDManager.Instance.AddTextToChatOnServer($"<color={teamColor}>{player}</color>: <color=#FFFF00>{content}</color>");
+        HUDManager.Instance.AddTextToChatOnServer($"<color={teamColor}>{player.Name}</color>: <color=#FFFF00>{content}</color>");
     }
 
+    /// <summary>
+    /// Called when this client changes team
+    /// </summary>
+    protected virtual void OnSelfTeamChange(BingoTeam oldTeam, BingoTeam newTeam)
+    {
+        var data = PlayerData;
+        data.Team = newTeam;
+        PlayerData = data;
+    }
+    
+    /// <summary>
+    /// Called when another client changes team
+    /// </summary>
+    protected virtual void OnOtherTeamChange(BingoTeam oldTeam, BingoTeam newTeam) { /* DO NOTHING */ }
+    
     #endregion
 
     #region API
 
-    public async Task<bool> ChangeTeam(BingoTeam team)
+    public async Task<SquareData[]?> GetBoard()
+    {
+        if (roomId == null)
+        {
+            Logger.Error("Tried to obtain the board before being connected.");
+            return null;
+        }
+
+        return await BingoAPI.GetBoard(roomId);
+    }
+    
+    public async Task ChangeTeam(BingoTeam newTeam)
     {
         if (roomId == null)
         {
             Logger.Error("Tried to change team before being connected.");
-            return false;
+            return;
         }
-        
-        bool success = await BingoAPI.ChangeTeam(roomId, team);
-        
-        if (success)
-            this.team = team;
 
-        return success;
+        if (!await BingoAPI.ChangeTeam(roomId, newTeam))
+            return;
+
+        var data = PlayerData;
+        data.Team = newTeam;
+        PlayerData = data;
     }
 
     public async Task<bool> MarkSquare(int id)
@@ -157,7 +331,7 @@ public class BingoClient
             return false;
         }
         
-        return await BingoAPI.MarkSquare(roomId, team, id);
+        return await BingoAPI.MarkSquare(roomId, PlayerData.Team, id);
     }
     
     public async Task<bool> ClearSquare(int id)
@@ -168,7 +342,7 @@ public class BingoClient
             return false;
         }
         
-        return await BingoAPI.ClearSquare(roomId, team, id);
+        return await BingoAPI.ClearSquare(roomId, PlayerData.Team, id);
     }
 
     public async Task<bool> SendMessage(string message)
@@ -186,6 +360,9 @@ public class BingoClient
     {
         await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client disconnecting", CancellationToken.None);
 
+        OnSelfDisconnect();
+        OnSelfDisconnected.Invoke();
+        
         socket.Dispose();
         return true;
     }
