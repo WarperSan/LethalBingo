@@ -26,7 +26,7 @@ public class BingoBoard : MonoBehaviour
     
     #region Events
 
-    private void OnSquareMarked(SquareData data)
+    private void OnSquareMarked(PlayerData player, SquareData data)
     {
         if (squares == null)
             return;
@@ -39,7 +39,7 @@ public class BingoBoard : MonoBehaviour
         squares[index]?.SetTeams(data.Teams);
     }
 
-    private void OnSquareCleared(SquareData data)
+    private void OnSquareCleared(PlayerData player, SquareData data)
     {
         if (squares == null)
             return;

@@ -109,6 +109,8 @@ namespace LethalBingo.UI.Forms
                 
                 if (newColor == null)
                     continue;
+
+                newColor.name = team.ToString();
                 
                 var el = newColor.GetComponent<ColorElement>();
                 
@@ -150,7 +152,7 @@ namespace LethalBingo.UI.Forms
             _menuManager?.DisplayMenuNotification("You successfully left the room.", "Thank you");
         }
 
-        private void OnTeamChanged(BingoTeam oldTeam, BingoTeam newTeam)
+        private void OnTeamChanged(PlayerData player, BingoTeam oldTeam, BingoTeam newTeam)
         {
             if (buttonForColor == null)
                 return;

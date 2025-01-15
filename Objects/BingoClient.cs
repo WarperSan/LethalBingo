@@ -1,4 +1,5 @@
-﻿using System.Net.WebSockets;
+﻿using System;
+using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
 using LethalBingo.Extensions;
@@ -38,18 +39,21 @@ public class BingoClient
     private readonly ClientWebSocket socket;
 
     // ReSharper disable ArrangeObjectCreationWhenTypeNotEvident
+    // Self
     public static readonly UnityEvent<string?, PlayerData> OnSelfConnected = new();
-    public static readonly UnityEvent<string?, PlayerData> OnOtherConnected = new();
     public static readonly UnityEvent OnSelfDisconnected = new();
-    public static readonly UnityEvent<string?, PlayerData> OnOtherDisconnected = new();
-    public static readonly UnityEvent<SquareData> OnSelfMarked = new();
-    public static readonly UnityEvent<SquareData> OnOtherMarked = new();
-    public static readonly UnityEvent<SquareData> OnSelfCleared = new();
-    public static readonly UnityEvent<SquareData> OnOtherCleared = new();
+    public static readonly UnityEvent<PlayerData, SquareData> OnSelfMarked = new();
+    public static readonly UnityEvent<PlayerData, SquareData> OnSelfCleared = new();
     public static readonly UnityEvent<PlayerData, string, ulong> OnSelfChatted = new();
+    public static readonly UnityEvent<PlayerData, BingoTeam, BingoTeam> OnSelfTeamChanged = new();
+    
+    // Other
+    public static readonly UnityEvent<string?, PlayerData> OnOtherConnected = new();
+    public static readonly UnityEvent<string?, PlayerData> OnOtherDisconnected = new();
+    public static readonly UnityEvent<PlayerData, SquareData> OnOtherMarked = new();
+    public static readonly UnityEvent<PlayerData, SquareData> OnOtherCleared = new();
     public static readonly UnityEvent<PlayerData, string, ulong> OnOtherChatted = new();
-    public static readonly UnityEvent<BingoTeam, BingoTeam> OnSelfTeamChanged = new();
-    public static readonly UnityEvent<BingoTeam, BingoTeam> OnOtherTeamChanged = new();
+    public static readonly UnityEvent<PlayerData, BingoTeam, BingoTeam> OnOtherTeamChanged = new();
     // ReSharper restore ArrangeObjectCreationWhenTypeNotEvident
 
     public async Task<bool> WaitForConnection(float timeoutMS)
@@ -110,64 +114,64 @@ public class BingoClient
         }
     }
 
-    private void HandleConnectedEvent(JObject connected, PlayerData data)
+    private void HandleConnectedEvent(JObject connected, PlayerData player)
     {
         var _roomId = connected.Value<string>("room");
         
         if (roomId == null)
         {
-            OnSelfConnect(_roomId, data);
-            OnSelfConnected.Invoke(_roomId, data);
+            OnSelfConnect(_roomId, player);
+            OnSelfConnected.Invoke(_roomId, player);
         }
         else
         {
-            OnOtherConnect(_roomId, data);
-            OnOtherConnected.Invoke(_roomId, data);
+            OnOtherConnect(_roomId, player);
+            OnOtherConnected.Invoke(_roomId, player);
         }
     }
 
-    private void HandleDisconnectedEvent(JObject disconnected, PlayerData data)
+    private void HandleDisconnectedEvent(JObject disconnected, PlayerData player)
     {
         var _roomId = disconnected.Value<string>("room");
         
         if (roomId != null)
         {
-            OnOtherDisconnect(_roomId, data);
-            OnOtherDisconnected.Invoke(_roomId, data);
+            OnOtherDisconnect(_roomId, player);
+            OnOtherDisconnected.Invoke(_roomId, player);
         }
     }
     
-    private void HandleChatEvent(JObject message, PlayerData data)
+    private void HandleChatEvent(JObject message, PlayerData player)
     {
         var content = message.Value<string>("text") ?? "";
         var timestamp = message.Value<ulong>("timestamp");
         
-        if (PlayerData.UUID == data.UUID)
+        if (PlayerData.UUID == player.UUID)
         {
-            OnSelfMessageReceived(data, content, timestamp);
-            OnSelfChatted.Invoke(data, content, timestamp);
+            OnSelfMessageReceived(content, timestamp);
+            OnSelfChatted.Invoke(player, content, timestamp);
         }
         else
         {
-            OnOtherMessageReceived(data, content, timestamp);
-            OnOtherChatted.Invoke(data, content, timestamp);
+            OnOtherMessageReceived(player, content, timestamp);
+            OnOtherChatted.Invoke(player, content, timestamp);
         }
     }
 
-    private void HandleColorEvent(PlayerData data)
+    private void HandleColorEvent(PlayerData player)
     {
-        var newColor = data.Team;
+        var newColor = player.Team;
         var oldTeam = PlayerData.Team;
 
-        if (PlayerData.UUID == data.UUID)
+        if (PlayerData.UUID == player.UUID)
         {
             OnSelfTeamChange(oldTeam, newColor);
-            OnSelfTeamChanged.Invoke(oldTeam, newColor);
+            OnSelfTeamChanged.Invoke(player, oldTeam, newColor);
         }
         else
         {
-            OnSelfTeamChange(oldTeam, newColor);
-            OnOtherTeamChanged.Invoke(oldTeam, newColor);
+            OnOtherTeamChange(player, oldTeam, newColor);
+            OnOtherTeamChanged.Invoke(player, oldTeam, newColor);
         }
     }
 
@@ -176,12 +180,12 @@ public class BingoClient
         if (PlayerData.UUID == player.UUID)
         {
             OnSelfMark(square);
-            OnSelfMarked.Invoke(square);
+            OnSelfMarked.Invoke(player, square);
         }
         else
         {
-            OnOtherMark(square);
-            OnOtherMarked.Invoke(square);
+            OnOtherMark(player, square);
+            OnOtherMarked.Invoke(player, square);
         }
     }
 
@@ -190,12 +194,12 @@ public class BingoClient
         if (PlayerData.UUID == player.UUID)
         {
             OnSelfClear(square);
-            OnSelfCleared.Invoke(square);
+            OnSelfCleared.Invoke(player, square);
         }
         else
         {
-            OnOtherClear(square);
-            OnOtherCleared.Invoke(square);
+            OnOtherClear(player, square);
+            OnOtherCleared.Invoke(player, square);
         }
     }
     
@@ -246,7 +250,7 @@ public class BingoClient
     /// <summary>
     /// Called when another client marks a square
     /// </summary>
-    protected virtual void OnOtherMark(SquareData square) { /* DO NOTHING */ }
+    protected virtual void OnOtherMark(PlayerData player, SquareData square) { /* DO NOTHING */ }
 
     /// <summary>
     /// Called when this client clears a square
@@ -256,12 +260,12 @@ public class BingoClient
     /// <summary>
     /// Called when another client clears a square
     /// </summary>
-    protected virtual void OnOtherClear(SquareData square) { /* DO NOTHING */ }
+    protected virtual void OnOtherClear(PlayerData player, SquareData square) { /* DO NOTHING */ }
     
     /// <summary>
     /// Called when this client sends a message to the room
     /// </summary>
-    protected virtual void OnSelfMessageReceived(PlayerData player, string content, ulong timestamp) { /* DO NOTHING */ }
+    protected virtual void OnSelfMessageReceived(string content, ulong timestamp) { /* DO NOTHING */ }
     
     /// <summary>
     /// Called when another client sends a message to the room
@@ -294,7 +298,7 @@ public class BingoClient
     /// <summary>
     /// Called when another client changes team
     /// </summary>
-    protected virtual void OnOtherTeamChange(BingoTeam oldTeam, BingoTeam newTeam) { /* DO NOTHING */ }
+    protected virtual void OnOtherTeamChange(PlayerData player, BingoTeam oldTeam, BingoTeam newTeam) { /* DO NOTHING */ }
     
     #endregion
 
@@ -362,12 +366,24 @@ public class BingoClient
     
     public async Task<bool> Disconnect()
     {
-        await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client disconnecting", CancellationToken.None);
+        Logger.Debug($"Disconnecting client for the room '{roomId}'...");
+
+        try
+        {
+            await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client disconnecting", CancellationToken.None);
+        }
+        catch (Exception e)
+        {
+            Logger.Error(e.Message);
+        }
+
+        socket.Dispose();
 
         OnSelfDisconnect();
         OnSelfDisconnected.Invoke();
         
-        socket.Dispose();
+        Logger.Debug("Client disconnected!");
+        
         return true;
     }
 
