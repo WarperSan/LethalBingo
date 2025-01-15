@@ -13,9 +13,11 @@ public class BingoClient
 {
     public string? roomId { get; private set; }
     public PlayerData PlayerData { get; protected set; }
+    public readonly bool IsCreator;
 
-    internal BingoClient(ClientWebSocket socket)
+    internal BingoClient(ClientWebSocket socket, bool isCreator)
     {
+        IsCreator = isCreator;
         roomId = null;
         PlayerData = new PlayerData
         {
@@ -29,6 +31,8 @@ public class BingoClient
         _ = socket.HandleMessages(OnSocketReceived);
     }
     
+    ~BingoClient() => _ = Disconnect();
+
     #region Socket
 
     private readonly ClientWebSocket socket;
@@ -368,9 +372,4 @@ public class BingoClient
     }
 
     #endregion
-
-    ~BingoClient()
-    {
-        _ = Disconnect();
-    }
 }

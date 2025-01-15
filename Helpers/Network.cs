@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Web;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UnityEngine.Networking;
@@ -15,75 +17,15 @@ public static class Network
     #region WebRequest
 
     /// <summary>
-    /// Checks if the given response has failed
+    /// Sends a request to the given URI using the given method
     /// </summary>
-    public static bool HasFailed(this UnityWebRequest response)
-        => response.result is not (UnityWebRequest.Result.Success or UnityWebRequest.Result.InProgress);
-
-    /// <summary>
-    /// Fetches the JSON object from the given response
-    /// </summary>
-    public static T? GetJSON<T>(this UnityWebRequest response)
-    {
-        string text = response.downloadHandler.text.Trim();
-
-        if (!text.StartsWith("[") && !text.StartsWith("{"))
-        {
-            Logger.Error($"Expected JSON, but received: {text}");
-            return default;
-        }
-        
-        return JsonConvert.DeserializeObject<T>(text);
-    }
-
-    /// <summary>
-    /// Fetches the JSON object from the given response
-    /// </summary>
-    public static JObject? GetJSON(this UnityWebRequest response) => response.GetJSON<JObject>();
-
-    /// <summary>
-    /// Prints the error from the given response
-    /// </summary>
-    public static void PrintError(this UnityWebRequest response, string errorMessage)
-    {
-        // Find error code
-        var code = response.responseCode;
-        
-        // Find error message
-        string? requestMessage;
-        var json = response.GetJSON();
-        
-        var error = json?.GetValue("error");
-
-        if (error == null)
-        {
-            var allErrors = json?.GetValue("__all__");
-
-            requestMessage = allErrors?.First?.Value<string>("message");
-        }
-        else
-            requestMessage = error.ToString();
-
-        requestMessage ??= "Unknown Error";
-        
-        Logger.Error($"[{code}] {errorMessage}: \"{requestMessage}\".");
-    }
-
-    /// <summary>
-    /// Sends a request to the given URI using the given method with or without a payload
-    /// </summary>
-    private static Task<UnityWebRequest> SendRequestAsync(string requestUri, HttpMethod method, object? payload)
+    private static Task<UnityWebRequest> SendRequest(string requestUri, HttpMethod method, Action<UnityWebRequest>? onPrepare)
     {
         UnityWebRequest request = new UnityWebRequest(requestUri, method.Method);
-
-        if (payload != null)
-        {
-            var json = JsonConvert.SerializeObject(payload);
-            request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json));
-        }
         
+        onPrepare?.Invoke(request);
+
         request.downloadHandler = new DownloadHandlerBuffer();
-        request.SetRequestHeader("Content-Type", "application/json");
 
         return Task.Run(async () =>
         {
@@ -99,14 +41,54 @@ public static class Network
     /// <summary>
     /// Sends a request to the given URI using the given method
     /// </summary>
-    public static Task<UnityWebRequest> RequestAsync(string requestUri, HttpMethod method) 
-        => SendRequestAsync(requestUri, method, null);
+    public static Task<UnityWebRequest> Request(string requestUri, HttpMethod method) 
+        => SendRequest(requestUri, method, null);
 
     /// <summary>
     /// Sends a request to the given URI using the given method and with the given JSON payload
     /// </summary>
-    public static Task<UnityWebRequest> RequestAsJsonAsync(string requestUri, object value, HttpMethod method)
-        => SendRequestAsync(requestUri, method, value);
+    public static Task<UnityWebRequest> RequestAsJson(string requestUri, HttpMethod method, object value)
+        => SendRequest(requestUri, method, r => PrepareJson(r, value));
+    
+    /// <summary>
+    /// Sends a request to the given URI using the given method and with the given form payload
+    /// </summary>
+    public static Task<UnityWebRequest> RequestAsForm(string requestUri, HttpMethod method, object value)
+        => SendRequest(requestUri, method, r => PrepareForm(r, value));
+
+    private static void PrepareJson(UnityWebRequest request, object payload)
+    {
+        var json = JsonConvert.SerializeObject(payload);
+        request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json));
+        request.SetRequestHeader("Content-Type", "application/json");
+    }
+
+    private static void PrepareForm(UnityWebRequest request, object payload)
+    {
+        var properties = payload.GetType().GetProperties();
+        var keyValuePairs = new List<string>();
+
+        foreach (var prop in properties)
+        {
+            var value = prop.GetValue(payload)?.ToString();
+            if (value != null)
+            {
+                var encodedKey = HttpUtility.UrlEncode(prop.Name);
+                var encodedValue = HttpUtility.UrlEncode(value);
+                keyValuePairs.Add($"{encodedKey}={encodedValue}");
+            }
+        }
+        
+        string data = string.Join("&", keyValuePairs);
+        request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(data));
+
+        const string csrfToken = "JdNt8KeU7a6gs9ygalsjmMGiILrfqacT";
+        const string sessionId = "nnyvfe24m7fucng03zgc5oqbfxr4v1qf";
+        
+        request.SetRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+        request.SetRequestHeader("Cookie", $"csrftoken={csrfToken}; sessionid={sessionId}");
+        request.SetRequestHeader("X-CSRFToken", csrfToken);
+    }
 
     #endregion
 
@@ -115,7 +97,7 @@ public static class Network
     /// <summary>
     /// Sends a request using the given payload at the given socket
     /// </summary>
-    public static async Task SendAsJsonAsync(this ClientWebSocket socket, object value)
+    public static async Task SendAsJson(this ClientWebSocket socket, object value)
     {
         string jsonMessage = JsonConvert.SerializeObject(value);
         byte[] buffer = Encoding.UTF8.GetBytes(jsonMessage);
@@ -135,7 +117,7 @@ public static class Network
             await socket.ConnectAsync(new Uri(BingoAPI.SOCKETS_URL), CancellationToken.None);
 
             // Authenticate to the server
-            await socket.SendAsJsonAsync(new { socket_key = socketKey });
+            await socket.SendAsJson(new { socket_key = socketKey });
         }
         catch (Exception e)
         {

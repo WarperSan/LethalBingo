@@ -85,7 +85,7 @@ namespace LethalBingo.UI.Forms
 
         private async void TryConnect(string code, string password, string nickname, bool isSpectator)
         {
-            if (await BingoAPI.JoinRoom(code, password, nickname, isSpectator))
+            if (await BingoAPI.JoinRoom(code, password, nickname, isSpectator, false))
                 return;
             
             _menuManager?.DisplayMenuNotification("An error has occured while joining the room.", "Okay");

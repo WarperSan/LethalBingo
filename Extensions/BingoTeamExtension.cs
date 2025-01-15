@@ -73,25 +73,25 @@ public static class BingoTeamExtension
         switch (team)
         {
             case BingoTeam.PINK:
-                return "#FFC0CB";
+                return "#ED86AA";
             case BingoTeam.RED:
-                return "#FF0000";
+                return "#FF4944";
             case BingoTeam.ORANGE:
-                return "#FFA500";
+                return "#FF9C12";
             case BingoTeam.BROWN:
-                return "#964B00";
+                return "#AB5C23";
             case BingoTeam.YELLOW:
-                return "#FFFF00";
+                return "#D8D014";
             case BingoTeam.GREEN:
-                return "#00FF00";
+                return "#31D814";
             case BingoTeam.TEAL:
-                return "#66b2b2";
+                return "#419695";
             case BingoTeam.BLUE:
-                return "#00f1ff";
+                return "#409CFF";
             case BingoTeam.NAVY:
-                return "#7d90ff";
+                return "#0D48B5";
             case BingoTeam.PURPLE:
-                return "#800080";
+                return "#822DBF";
             case BingoTeam.BLANK:
             default:
                 return "#FFFFFF";
