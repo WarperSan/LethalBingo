@@ -2,7 +2,6 @@
 using LethalBingo.Helpers;
 using LethalBingo.UI.Slots;
 using UnityEngine;
-using Logger = LethalBingo.Helpers.Logger;
 
 namespace LethalBingo.Objects;
 

@@ -1,5 +1,6 @@
 using BepInEx;
 using HarmonyLib;
+using LethalBingo.Core;
 using LethalBingo.Helpers;
 using LethalBingo.Objects;
 using UnityEngine;
@@ -13,6 +14,8 @@ public class LethalBingo : BaseUnityPlugin
     
     private void Awake()
     {
+        AssemblyLoader.LoadEmbeddedDLL();
+        
         Helpers.Logger.SetLogger(Logger);
 
         // Load bundle
@@ -48,6 +51,7 @@ public class LethalBingo : BaseUnityPlugin
     #region Prefabs
 
     public static GameObject? BINGO_JOIN_FORM_PREFAB;
+    public static GameObject? BINGO_CREATE_FORM_PREFAB;
     public static GameObject? BINGO_STATE_FORM_PREFAB;
     public static GameObject? BINGO_BOARD_PREFAB;
     
@@ -56,6 +60,7 @@ public class LethalBingo : BaseUnityPlugin
         Helpers.Logger.Debug("Preparing prefabs...");
 
         BINGO_JOIN_FORM_PREFAB = Bundle.LoadAsset<GameObject>("BingoJoinForm");
+        BINGO_CREATE_FORM_PREFAB = Bundle.LoadAsset<GameObject>("BingoCreateForm");
         BINGO_STATE_FORM_PREFAB = Bundle.LoadAsset<GameObject>("BingoStateForm");
         BINGO_BOARD_PREFAB = Bundle.LoadAsset<GameObject>("BingoBoard");
         

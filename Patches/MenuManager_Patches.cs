@@ -39,6 +39,11 @@ internal class MenuManager_Patches
             Object.Instantiate(LethalBingo.BINGO_JOIN_FORM_PREFAB, ui.transform, false);
         else
             Logger.Error("Could not spawn the join form.");
+        
+        if (LethalBingo.BINGO_CREATE_FORM_PREFAB != null)
+            Object.Instantiate(LethalBingo.BINGO_CREATE_FORM_PREFAB, ui.transform, false);
+        else
+            Logger.Error("Could not spawn the create form.");
 
         if (LethalBingo.BINGO_STATE_FORM_PREFAB != null)
             Object.Instantiate(LethalBingo.BINGO_STATE_FORM_PREFAB, ui.transform, false);

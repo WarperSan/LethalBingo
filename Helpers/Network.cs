@@ -1,93 +1,143 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net.Http;
 using System.Net.WebSockets;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Web;
+using HtmlAgilityPack;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UnityEngine.Networking;
 
 namespace LethalBingo.Helpers;
 
+public struct NetworkResponse
+{
+    public string URL;
+    public long Code;
+    public string Status;
+    
+    // Error
+    public string Error;
+    public bool IsError;
+    public void PrintError(string errorMessage) => Logger.Error($"[{Code}] {errorMessage}: {Status} ({Error})");
+    
+    // Content
+    public string Content;
+    public T? Parse<T>() => JsonConvert.DeserializeObject<T>(Content);
+    public JObject? Json() => Parse<JObject>();
+}
+
 public static class Network
 {
     #region WebRequest
 
-    /// <summary>
-    /// Sends a request to the given URI using the given method
-    /// </summary>
-    private static Task<UnityWebRequest> SendRequest(string requestUri, HttpMethod method, Action<UnityWebRequest>? onPrepare)
+    private static async Task Send(UnityWebRequest request)
     {
-        UnityWebRequest request = new UnityWebRequest(requestUri, method.Method);
-        
-        onPrepare?.Invoke(request);
+        var req = request.SendWebRequest();
 
+        while (!req.isDone)
+        {
+            Logger.Debug(req.webRequest.url + ": " + (req.progress * 100) + "%");
+            await Task.Delay(25);
+        }
+    }
+
+    private static NetworkResponse CompileResponse(UnityWebRequest req) => new()
+    {
+        URL = req.url,
+        Code = req.responseCode,
+        Status = UnityWebRequest.GetHTTPStatusString(req.responseCode),
+        
+        // Error
+        Error = req.error,
+        IsError = req.result is not (UnityWebRequest.Result.Success or UnityWebRequest.Result.InProgress),
+        
+        // Content
+        Content = req.downloadHandler.text.Trim()
+    };
+
+    public static async Task<NetworkResponse> Get(string uri)
+    {
+        using var request = UnityWebRequest.Get(uri);
+        request.downloadHandler = new DownloadHandlerBuffer();
+        
+        await Send(request);
+        return CompileResponse(request);
+    }
+
+    public static async Task<string?> GetCORSToken(string uri)
+    {
+        using var request = UnityWebRequest.Get(uri);
+        
         request.downloadHandler = new DownloadHandlerBuffer();
 
-        return Task.Run(async () =>
+        await Send(request);
+        var response = CompileResponse(request);
+
+        if (response.IsError)
         {
-            var req = request.SendWebRequest();
+            response.PrintError("Failed to fetch CORS token");
+            return null;
+        }
 
-            while (!req.isDone)
-                await Task.Delay(25);
-
-            return req.webRequest;
-        });
-    }
-
-    /// <summary>
-    /// Sends a request to the given URI using the given method
-    /// </summary>
-    public static Task<UnityWebRequest> Request(string requestUri, HttpMethod method) 
-        => SendRequest(requestUri, method, null);
-
-    /// <summary>
-    /// Sends a request to the given URI using the given method and with the given JSON payload
-    /// </summary>
-    public static Task<UnityWebRequest> RequestAsJson(string requestUri, HttpMethod method, object value)
-        => SendRequest(requestUri, method, r => PrepareJson(r, value));
-    
-    /// <summary>
-    /// Sends a request to the given URI using the given method and with the given form payload
-    /// </summary>
-    public static Task<UnityWebRequest> RequestAsForm(string requestUri, HttpMethod method, object value)
-        => SendRequest(requestUri, method, r => PrepareForm(r, value));
-
-    private static void PrepareJson(UnityWebRequest request, object payload)
-    {
-        var json = JsonConvert.SerializeObject(payload);
-        request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json));
-        request.SetRequestHeader("Content-Type", "application/json");
-    }
-
-    private static void PrepareForm(UnityWebRequest request, object payload)
-    {
-        var properties = payload.GetType().GetProperties();
-        var keyValuePairs = new List<string>();
-
-        foreach (var prop in properties)
+        HtmlDocument doc = new HtmlDocument();
+        doc.LoadHtml(response.Content);
+        
+        var input = doc.DocumentNode.SelectSingleNode("//input[@name='csrfmiddlewaretoken']");
+        
+        if (input == null)
         {
-            var value = prop.GetValue(payload)?.ToString();
-            if (value != null)
-            {
-                var encodedKey = HttpUtility.UrlEncode(prop.Name);
-                var encodedValue = HttpUtility.UrlEncode(value);
-                keyValuePairs.Add($"{encodedKey}={encodedValue}");
-            }
+            Logger.Error("Could not find the input 'csrfmiddlewaretoken'.");
+            return null;
+        }
+
+        var token = input.GetAttributeValue("value", null);
+        
+        if (token == null)
+        {
+            Logger.Error("Could not find the attribute 'value'.");
+            return null;
         }
         
-        string data = string.Join("&", keyValuePairs);
-        request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(data));
+        return token;
+    }
 
-        const string csrfToken = "JdNt8KeU7a6gs9ygalsjmMGiILrfqacT";
-        const string sessionId = "nnyvfe24m7fucng03zgc5oqbfxr4v1qf";
+    public static async Task<NetworkResponse> PostJson(string uri, object payload)
+    {
+        var json = JsonConvert.SerializeObject(payload);
+        using var request = UnityWebRequest.Post(uri, json, "application/json");
+        request.downloadHandler = new DownloadHandlerBuffer();
+
+        await Send(request);
+        return CompileResponse(request);
+    }
+
+    public static async Task<NetworkResponse> PostCORSForm(string uri, string corsToken, object payload)
+    {
+        var formFields = new Dictionary<string, string>();
         
-        request.SetRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-        request.SetRequestHeader("Cookie", $"csrftoken={csrfToken}; sessionid={sessionId}");
-        request.SetRequestHeader("X-CSRFToken", csrfToken);
+        foreach (var property in payload.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            formFields[property.Name] = property.GetValue(payload).ToString();
+        
+        using var request = UnityWebRequest.Post(uri, formFields);
+        request.downloadHandler = new DownloadHandlerBuffer();
+        
+        request.SetRequestHeader("X-CSRFToken", corsToken);
+        
+        await Send(request);
+        return CompileResponse(request);
+    }
+
+    public static async Task<NetworkResponse> PutJson(string uri, object payload)
+    {
+        var json = JsonConvert.SerializeObject(payload);
+        using var request = UnityWebRequest.Put(uri, json);
+        request.downloadHandler = new DownloadHandlerBuffer();
+
+        await Send(request);
+        return CompileResponse(request);
     }
 
     #endregion

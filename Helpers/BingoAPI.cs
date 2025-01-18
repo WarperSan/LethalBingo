@@ -1,9 +1,7 @@
-﻿using System.Net.Http;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using LethalBingo.Extensions;
 using LethalBingo.Objects;
 using Newtonsoft.Json.Linq;
-using UnityEngine.Networking;
 
 namespace LethalBingo.Helpers;
 
@@ -47,7 +45,17 @@ public static class BingoAPI
         bool isSpectator,
         bool hideCard
     ) {
-        Logger.Debug($"Creating a new room...");
+        
+        Logger.Debug("Fetching CORS token...");
+
+        var token = await Network.GetCORSToken(BINGO_URL);
+
+        if (token == null)
+            return false;
+        
+        Logger.Debug("CORS token fetched!");
+        
+        Logger.Debug("Creating a new room...");
 
         var body = new
         {
@@ -61,22 +69,21 @@ public static class BingoAPI
             seed = seed, // Specify seed if needed
             is_spectator = true,
             hide_card = hideCard,
+            csrfmiddlewaretoken = token
         };
-
-        var response = await Network.RequestAsForm(CREATE_ROOM_URL, HttpMethod.Post, body);
+        
+        var response = await Network.PostCORSForm(CREATE_ROOM_URL, token, body);
         
         // If failed, fetch error
-        if (response.HasFailed())
+        if (response.IsError)
         {
-            response.PrintError($"Failed to create a new room.");
-            response.Dispose();
+            response.PrintError("Failed to create a new room");
             return false;
         }
         
         Logger.Debug("Room created!");
-        var roomCode = response.url[^22..];
-        response.Dispose();
-
+        var roomCode = response.URL[^22..];
+        
         return await JoinRoom(roomCode, roomPassword, nickName, isSpectator, true);
     }
     
@@ -100,20 +107,18 @@ public static class BingoAPI
             is_spectator = isSpectator
         };
         
-        var response = await Network.RequestAsJson(JOIN_ROOM_URL, HttpMethod.Post, body);
+        var response = await Network.PostJson(JOIN_ROOM_URL, body);
 
         // If failed, fetch error
-        if (response.HasFailed())
+        if (response.IsError)
         {
             response.PrintError($"Failed to join room '{roomId}'.");
-            response.Dispose();
             return false;
         }
 
-        var responseJson = response.GetJSON();
+        var responseJson = response.Json();
 
         var socket = await Network.CreateSocket(responseJson?.Value<string>("socket_key"));
-        response.Dispose();
 
         if (socket == null)
         {
@@ -151,19 +156,17 @@ public static class BingoAPI
         
         var url = string.Format(GET_BOARD_URL, roomId);
 
-        var response = await Network.Request(url, HttpMethod.Get);
+        var response = await Network.Get(url);
         
-        if (response.HasFailed())
+        if (response.IsError)
         {
             response.PrintError($"Failed to obtain the board of the room '{roomId}'");
-            response.Dispose();
             return null;
         }
 
         Logger.Debug($"Board successfully obtained from the room '{roomId}'!");
 
-        var json = response.GetJSON<JArray>();
-        response.Dispose();
+        var json = response.Parse<JArray>();
 
         if (json == null)
             return [];
@@ -195,21 +198,19 @@ public static class BingoAPI
             color = newTeam.GetName(),
         };
         
-        var response = await Network.RequestAsJson(CHANGE_TEAM_URL, HttpMethod.Put, body);
+        var response = await Network.PutJson(CHANGE_TEAM_URL, body);
 
-        if (response.HasFailed())
+        if (response.IsError)
         {
             response.PrintError($"Failed to change team to '{body.color}'");
-            response.Dispose();
             return false;
         }
 
         Logger.Debug($"Team successfully changed to '{newTeam}'!");
-        response.Dispose();
         return true;
     }
     
-    private static async Task<UnityWebRequest?> SelectSquare(string roomId, BingoTeam team, int id, bool isMarking)
+    private static async Task<NetworkResponse?> SelectSquare(string roomId, BingoTeam team, int id, bool isMarking)
     {
         if (id is <= 0 or > MAX_BINGO_SIZE)
         {
@@ -227,7 +228,7 @@ public static class BingoAPI
             remove_color = !isMarking
         };
         
-        return await Network.RequestAsJson(SELECT_SQUARE_URL, HttpMethod.Put, body);
+        return await Network.PutJson(SELECT_SQUARE_URL, body);
     }
 
     /// <summary>
@@ -238,20 +239,20 @@ public static class BingoAPI
     /// <param name="id">Index of the square</param>
     public static async Task<bool> MarkSquare(string roomId, BingoTeam team, int id)
     {
-        var response = await SelectSquare(roomId, team, id, true);
+        var r = await SelectSquare(roomId, team, id, true);
 
-        if (response == null)
+        if (!r.HasValue)
             return false;
 
-        if (response.HasFailed())
+        var response = r.Value;
+
+        if (response.IsError)
         {
             response.PrintError($"Failed to mark the square '{id}'");
-            response.Dispose();
             return false;
         }
         
         Logger.Debug($"Square '{id}' successfully marked!");
-        response.Dispose();
         return true;
     }
     
@@ -263,21 +264,20 @@ public static class BingoAPI
     /// <param name="id">Index of the square</param>
     public static async Task<bool> ClearSquare(string roomId, BingoTeam team, int id)
     {
-        var response = await SelectSquare(roomId, team, id, false);
+        var r = await SelectSquare(roomId, team, id, false);
 
-        if (response == null)
+        if (!r.HasValue)
             return false;
 
-        if (response.HasFailed())
+        var response = r.Value;
+
+        if (response.IsError)
         {
             response.PrintError($"Failed to clear the square '{id}'");
-            response.Dispose();
             return false;
         }
         
         Logger.Debug($"Square '{id}' successfully cleared!");
-        response.Dispose();
-
         return true;
     }
     
@@ -294,16 +294,14 @@ public static class BingoAPI
             text = message
         };
         
-        var response = await Network.RequestAsJson(SEND_MESSAGE_URL, HttpMethod.Put, body);
+        var response = await Network.PutJson(SEND_MESSAGE_URL, body);
 
-        if (response.HasFailed())
+        if (response.IsError)
         {
             response.PrintError($"Failed to send the message '{message}'");
-            response.Dispose();
             return false;
         }
-        
-        response.Dispose();
+
         return true;
     }
 }
