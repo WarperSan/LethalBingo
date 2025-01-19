@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
+using LethalBingo.Core;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UnityEngine.Networking;
@@ -38,10 +39,7 @@ public static class Network
         var req = request.SendWebRequest();
 
         while (!req.isDone)
-        {
-            Logger.Debug(req.webRequest.url + ": " + (req.progress * 100) + "%");
             await Task.Delay(25);
-        }
     }
 
     private static NetworkResponse CompileResponse(UnityWebRequest req) => new()

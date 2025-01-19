@@ -1,5 +1,5 @@
-﻿using LethalBingo.Extensions;
-using LethalBingo.Objects;
+﻿using LethalBingo.Core;
+using LethalBingo.Extensions;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;

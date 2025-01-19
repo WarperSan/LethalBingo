@@ -1,4 +1,4 @@
-using LethalBingo.Objects;
+using LethalBingo.Core;
 using UnityEngine;
 
 namespace LethalBingo.UI.Slots;

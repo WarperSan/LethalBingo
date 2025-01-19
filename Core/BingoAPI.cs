@@ -1,9 +1,11 @@
 ﻿using System.Threading.Tasks;
+using LethalBingo.Core.Data;
 using LethalBingo.Extensions;
+using LethalBingo.Helpers;
 using LethalBingo.Objects;
 using Newtonsoft.Json.Linq;
 
-namespace LethalBingo.Helpers;
+namespace LethalBingo.Core;
 
 public static class BingoAPI
 {
@@ -16,12 +18,20 @@ public static class BingoAPI
     public const string SOCKETS_URL = "wss://sockets.bingosync.com/broadcast";
     private const string BINGO_URL = "https://bingosync.com";
     private const string CREATE_ROOM_URL = BINGO_URL + "/";
-    private const string JOIN_ROOM_URL = BINGO_URL + "/api/join-room";
+    
     private const string GET_BOARD_URL = BINGO_URL + "/room/{0}/board";
+    private const string FEED_URL = BINGO_URL + "/room/{0}/feed";
+    private const string ROOM_SETTINGS_URL = BINGO_URL + "/room/{0}/room-settings";
+    
+    private const string JOIN_ROOM_URL = BINGO_URL + "/api/join-room";
     private const string CHANGE_TEAM_URL = BINGO_URL + "/api/color";
     private const string SELECT_SQUARE_URL = BINGO_URL + "/api/select";
     private const string SEND_MESSAGE_URL = BINGO_URL + "/api/chat";
-
+    private const string REVEAL_CARD_URL = BINGO_URL + "/api/revealed";
+    private const string NEW_CARD_URL = BINGO_URL + "/api/new-card";
+    private const string GET_SOCKET_KEY_URL = BINGO_URL + "/api/get-socket-key/{0}";
+    private const string GET_SOCKET_URL = BINGO_URL + "/api/socket/{0}";
+    
     /// <summary>
     /// Creates a room, joins it and creates a client out of it
     /// </summary>
@@ -304,38 +314,43 @@ public static class BingoAPI
 
         return true;
     }
-}
 
-public struct PlayerData
-{
-    public string? UUID;
-    public string? Name;
-    public BingoTeam Team;
-    public bool IsSpectator;
-
-    public static PlayerData ParseJSON(JToken? obj) => new()
+    /// <summary>
+    /// Reveals the card for the entire room
+    /// </summary>
+    /// <param name="roomId">ID of the room</param>
+    public static async Task<bool> RevealCard(string roomId)
     {
-        UUID = obj?.Value<string>("uuid"),
-        Name = obj?.Value<string>("name"),
-        Team = obj?.Value<string>("color").GetTeam() ?? BingoTeam.BLANK,
-        IsSpectator = obj?.Value<bool>("is_spectator") ?? false
-    };
-}
-
-public struct SquareData
-{
-    public string? Name;
-    public int Index;
-    public BingoTeam[] Teams;
-
-    public static SquareData ParseJSON(JToken? obj)
-    {
-        var slot = obj?.Value<string>("slot")?.Replace("slot", "");
-        return new SquareData
+        var body = new
         {
-            Name = obj?.Value<string>("name"),
-            Index = slot != null && int.TryParse(slot, out var index) ? index : 0,
-            Teams = obj?.Value<string>("colors").GetTeams() ?? []
+            room = roomId
         };
+
+        var response = await Network.PutJson(REVEAL_CARD_URL, body);
+
+        if (response.IsError)
+        {
+            response.PrintError("Failed to reveal the card");
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Fetches the socket key for the given room
+    /// </summary>
+    /// <param name="roomId">ID of the room</param>
+    public static async Task<string?> GetSocketKey(string roomId)
+    {
+        var response = await Network.Get(string.Format(GET_SOCKET_KEY_URL, roomId));
+
+        if (response.IsError)
+        {
+            response.PrintError($"Failed to get the socket key for the room '{roomId}'");
+            return null;
+        }
+
+        return response.Json()?.Value<string>("socket_key");
     }
 }

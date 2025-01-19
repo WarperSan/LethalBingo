@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using LethalBingo.Objects;
+using LethalBingo.Core;
 using UnityEngine;
 
 namespace LethalBingo.Extensions;

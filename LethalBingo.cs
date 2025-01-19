@@ -1,6 +1,5 @@
 using BepInEx;
 using HarmonyLib;
-using LethalBingo.Core;
 using LethalBingo.Helpers;
 using LethalBingo.Objects;
 using UnityEngine;

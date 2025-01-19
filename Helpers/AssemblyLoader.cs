@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Reflection;
 
-namespace LethalBingo.Core;
+namespace LethalBingo.Helpers;
 
 internal static class AssemblyLoader
 {
@@ -9,7 +9,7 @@ internal static class AssemblyLoader
     {
         AppDomain.CurrentDomain.AssemblyResolve += (sender, args) =>
         {
-            string resourceName = "LethalBingo.Resources." + new AssemblyName(args.Name).Name + ".dll";
+            string resourceName = nameof(LethalBingo) + ".Resources." + new AssemblyName(args.Name).Name + ".dll";
 
             using var stream = Assembly.GetExecutingAssembly()
                 .GetManifestResourceStream(resourceName);

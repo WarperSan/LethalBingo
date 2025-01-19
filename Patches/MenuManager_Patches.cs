@@ -1,5 +1,4 @@
 ﻿using HarmonyLib;
-using LethalBingo.Extensions;
 using UnityEngine;
 using Logger = LethalBingo.Helpers.Logger;
 
@@ -10,9 +9,7 @@ internal class MenuManager_Patches
 {
     [HarmonyPostfix]
     [HarmonyPatch(nameof(MenuManager.Start))]
-    private static void CreateUI(MenuManager __instance) => BuildUI();
-
-    private static void BuildUI()
+    private static void CreateUI(MenuManager __instance)
     {
         // Fetch container
         var container = GameObject.Find(Constants.MENU_CONTAINER_PATH);
@@ -27,7 +24,11 @@ internal class MenuManager_Patches
         var ui = new GameObject(nameof(LethalBingo) + "_UI");
         ui.transform.SetParent(container.transform, false);
 
-        ui.AddComponent<RectTransform>().FillParent();
+        var rect = ui.AddComponent<RectTransform>();
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.anchoredPosition = Vector2.zero;
+        rect.offsetMin = rect.offsetMax = Vector2.zero;
         
         var index = container.transform.Find("LobbyHostSettings")?.GetSiblingIndex() ?? -1;
         

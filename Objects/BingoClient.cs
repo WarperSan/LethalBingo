@@ -2,6 +2,9 @@
 using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
+using LethalBingo.Core;
+using LethalBingo.Core.Data;
+using LethalBingo.Core.Events;
 using LethalBingo.Extensions;
 using LethalBingo.Helpers;
 using Newtonsoft.Json.Linq;
@@ -31,7 +34,7 @@ public class BingoClient
 
         _ = socket.HandleMessages(OnSocketReceived);
     }
-    
+
     ~BingoClient() => _ = Disconnect();
 
     #region Socket
@@ -71,135 +74,113 @@ public class BingoClient
     {
         if (json == null)
             return;
-        
-        Logger.Info(json);
-        
-        var type = json.Value<string>("type");
-        var playerData = PlayerData.ParseJSON(json.GetValue("player"));
 
-        switch (type)
+        var _event = Event.ParseEvent(json);
+        
+        if (_event == null)
+            return;
+
+        switch (_event)
         {
-            case "connection":
-                var eventType = json.Value<string>("event_type");
-                
-                switch (eventType)
-                {
-                    case "connected":
-                        HandleConnectedEvent(json, playerData);
-                        break;
-                    case "disconnected":
-                        HandleDisconnectedEvent(json, playerData);
-                        break;
-                }
-                return;
-            case "chat":
-                HandleChatEvent(json, playerData);
-                return;
-            case "color":
-                HandleColorEvent(playerData);
-                return;
-            case "goal":
-                var goal = json.GetValue("square");
-                var remove = goal?.Value<bool>("remove") ?? false;
-                var squareData = SquareData.ParseJSON(goal);
-                
-                if (remove)
-                    HandleClearedEvent(squareData, playerData);
+            case ConnectedEvent _connected:
+                HandleConnectedEvent(_connected);
+                break;
+            case DisconnectedEvent _disconnected:
+                HandleDisconnectedEvent(_disconnected);
+                break;
+            case ChatEvent _chat:
+                HandleChatEvent(_chat);
+                break;
+            case ColorEvent _color:
+                HandleColorEvent(_color);
+                break;
+            case GoalEvent _goal:
+                if (_goal.Remove)
+                    HandleClearedEvent(_goal);
                 else
-                    HandleMarkedEvent(squareData, playerData);
-                return;
-            default:
-                Logger.Error($"Unhandled response: {json}");
+                    HandleMarkedEvent(_goal);
                 break;
         }
     }
 
-    private void HandleConnectedEvent(JObject connected, PlayerData player)
+    private void HandleConnectedEvent(ConnectedEvent @event)
     {
-        var _roomId = connected.Value<string>("room");
-        
         if (roomId == null)
         {
-            OnSelfConnect(_roomId, player);
-            OnSelfConnected.Invoke(_roomId, player);
+            OnSelfConnect(@event.RoomId, @event.Player);
+            OnSelfConnected.Invoke(@event.RoomId, @event.Player);
         }
         else
         {
-            OnOtherConnect(_roomId, player);
-            OnOtherConnected.Invoke(_roomId, player);
+            OnOtherConnect(@event.RoomId, @event.Player);
+            OnOtherConnected.Invoke(@event.RoomId, @event.Player);
         }
     }
 
-    private void HandleDisconnectedEvent(JObject disconnected, PlayerData player)
+    private void HandleDisconnectedEvent(DisconnectedEvent @event)
     {
-        var _roomId = disconnected.Value<string>("room");
-        
         if (roomId != null)
         {
-            OnOtherDisconnect(_roomId, player);
-            OnOtherDisconnected.Invoke(_roomId, player);
+            OnOtherDisconnect(@event.RoomId, @event.Player);
+            OnOtherDisconnected.Invoke(@event.RoomId, @event.Player);
         }
     }
     
-    private void HandleChatEvent(JObject message, PlayerData player)
+    private void HandleChatEvent(ChatEvent @event)
     {
-        var content = message.Value<string>("text") ?? "";
-        var timestamp = message.Value<ulong>("timestamp");
-        
-        if (PlayerData.UUID == player.UUID)
+        if (PlayerData.UUID == @event.Player.UUID)
         {
-            OnSelfMessageReceived(content, timestamp);
-            OnSelfChatted.Invoke(player, content, timestamp);
+            OnSelfMessageReceived(@event.Text, @event.Timestamp);
+            OnSelfChatted.Invoke(@event.Player, @event.Text, @event.Timestamp);
         }
         else
         {
-            OnOtherMessageReceived(player, content, timestamp);
-            OnOtherChatted.Invoke(player, content, timestamp);
+            OnOtherMessageReceived(@event.Player, @event.Text, @event.Timestamp);
+            OnOtherChatted.Invoke(@event.Player, @event.Text, @event.Timestamp);
         }
     }
 
-    private void HandleColorEvent(PlayerData player)
+    private void HandleColorEvent(ColorEvent @event)
     {
-        var newColor = player.Team;
         var oldTeam = PlayerData.Team;
 
-        if (PlayerData.UUID == player.UUID)
+        if (PlayerData.UUID == @event.Player.UUID)
         {
-            OnSelfTeamChange(oldTeam, newColor);
-            OnSelfTeamChanged.Invoke(player, oldTeam, newColor);
+            OnSelfTeamChange(oldTeam, @event.Player.Team);
+            OnSelfTeamChanged.Invoke(@event.Player, oldTeam, @event.Player.Team);
         }
         else
         {
-            OnOtherTeamChange(player, oldTeam, newColor);
-            OnOtherTeamChanged.Invoke(player, oldTeam, newColor);
+            OnOtherTeamChange(@event.Player, oldTeam, @event.Player.Team);
+            OnOtherTeamChanged.Invoke(@event.Player, oldTeam, @event.Player.Team);
         }
     }
 
-    private void HandleMarkedEvent(SquareData square, PlayerData player)
+    private void HandleMarkedEvent(GoalEvent @event)
     {
-        if (PlayerData.UUID == player.UUID)
+        if (PlayerData.UUID == @event.Player.UUID)
         {
-            OnSelfMark(square);
-            OnSelfMarked.Invoke(player, square);
+            OnSelfMark(@event.Square);
+            OnSelfMarked.Invoke(@event.Player, @event.Square);
         }
         else
         {
-            OnOtherMark(player, square);
-            OnOtherMarked.Invoke(player, square);
+            OnOtherMark(@event.Player, @event.Square);
+            OnOtherMarked.Invoke(@event.Player, @event.Square);
         }
     }
 
-    private void HandleClearedEvent(SquareData square, PlayerData player)
+    private void HandleClearedEvent(GoalEvent @event)
     {
-        if (PlayerData.UUID == player.UUID)
+        if (PlayerData.UUID == @event.Player.UUID)
         {
-            OnSelfClear(square);
-            OnSelfCleared.Invoke(player, square);
+            OnSelfClear(@event.Square);
+            OnSelfCleared.Invoke(@event.Player, @event.Square);
         }
         else
         {
-            OnOtherClear(player, square);
-            OnOtherCleared.Invoke(player, square);
+            OnOtherClear(@event.Player, @event.Square);
+            OnOtherCleared.Invoke(@event.Player, @event.Square);
         }
     }
     
@@ -226,7 +207,6 @@ public class BingoClient
     /// </summary>
     protected virtual void OnSelfDisconnect()
     {
-        LethalBingo.CurrentClient = null;
         roomId = null;
         PlayerData = new PlayerData
         {
@@ -235,6 +215,8 @@ public class BingoClient
             Team = BingoTeam.BLANK,
             IsSpectator = true
         };
+        
+        LethalBingo.CurrentClient = null;
     }
     
     /// <summary>
@@ -366,6 +348,9 @@ public class BingoClient
     
     public async Task<bool> Disconnect()
     {
+        if (roomId == null)
+            return true;
+        
         Logger.Debug($"Disconnecting client for the room '{roomId}'...");
 
         try

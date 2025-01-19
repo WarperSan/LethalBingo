@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace LethalBingo.Objects;
+namespace LethalBingo.Core;
 
 [Flags]
 public enum BingoTeam: ushort
