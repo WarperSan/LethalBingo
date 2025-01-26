@@ -1,20 +1,19 @@
 using BepInEx;
+using BingoAPI;
 using HarmonyLib;
 using LethalBingo.Helpers;
-using LethalBingo.Objects;
 using UnityEngine;
 
 namespace LethalBingo;
 
 [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
+[BepInDependency(BingoAPI.MyPluginInfo.PLUGIN_GUID)]
 public class LethalBingo : BaseUnityPlugin
 {
     public static BingoClient? CurrentClient;
     
     private void Awake()
     {
-        AssemblyLoader.LoadEmbeddedDLL();
-        
         Helpers.Logger.SetLogger(Logger);
 
         // Load bundle

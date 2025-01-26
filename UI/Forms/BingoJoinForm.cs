@@ -1,5 +1,5 @@
-using LethalBingo.Core;
-using LethalBingo.Core.Data;
+using BingoAPI;
+using BingoAPI.Data;
 using LethalBingo.Objects;
 using Steamworks;
 using TMPro;
@@ -86,12 +86,15 @@ public class BingoJoinForm : MonoBehaviour
 
     private async void TryConnect(string code, string password, string nickname, bool isSpectator)
     {
-        bool success = await BingoAPI.JoinRoom(code, password, nickname, isSpectator, false);
+        var client = await API.JoinRoom<LethalBingoClient>(code, password, nickname, isSpectator, false);
         
         SetActiveJoinForm(true);
-        
-        if (success)
+
+        if (client != null)
+        {
+            LethalBingo.CurrentClient = client;
             return;
+        }
             
         _menuManager?.DisplayMenuNotification("An error has occured while joining the room.", "Okay");
     }

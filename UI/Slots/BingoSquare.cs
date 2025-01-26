@@ -1,4 +1,4 @@
-using LethalBingo.Core;
+using BingoAPI.Data;
 using UnityEngine;
 
 namespace LethalBingo.UI.Slots;

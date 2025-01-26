@@ -1,8 +1,7 @@
 ﻿using System.Collections.Generic;
-using LethalBingo.Core;
-using LethalBingo.Core.Data;
-using LethalBingo.Extensions;
-using LethalBingo.Objects;
+using BingoAPI;
+using BingoAPI.Data;
+using BingoAPI.Extensions;
 using UnityEngine;
 using UnityEngine.UI;
 

@@ -1,5 +1,5 @@
-﻿using LethalBingo.Core;
-using LethalBingo.Core.Data;
+﻿using BingoAPI;
+using BingoAPI.Data;
 using LethalBingo.Objects;
 using Steamworks;
 using TMPro;
@@ -126,7 +126,7 @@ public class BingoCreateForm : MonoBehaviour
             bool isSpectator,
             bool _hideCard)
         {
-            bool success = await BingoAPI.CreateRoom(
+            var client = await API.CreateRoom<LethalBingoClient>(
                 _name, 
                 password, 
                 nickName, 
@@ -138,9 +138,12 @@ public class BingoCreateForm : MonoBehaviour
             );
             
             SetActiveCreateForm(true);
-        
-            if (success)
+
+            if (client != null)
+            {
+                LethalBingo.CurrentClient = client;
                 return;
+            }
             
             _menuManager?.DisplayMenuNotification("An error has occured while creating the room.", "Okay");
         }
