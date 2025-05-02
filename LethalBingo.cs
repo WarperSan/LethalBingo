@@ -7,7 +7,6 @@ using UnityEngine;
 namespace LethalBingo;
 
 [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
-[BepInDependency(MyPluginInfo.PLUGIN_GUID)]
 public class LethalBingo : BaseUnityPlugin
 {
     public static BingoClient? CurrentClient;
