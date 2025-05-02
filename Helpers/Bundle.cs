@@ -1,5 +1,8 @@
-﻿using System.Reflection;
+﻿using System;
+using System.IO;
+using System.Reflection;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace LethalBingo.Helpers;
 
@@ -16,15 +19,11 @@ internal static class Bundle
     /// <returns>Success of the load</returns>
     public static bool LoadBundle(string name)
     {
-        var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(name);
-
-        if (stream == null)
-        {
-            Logger.Error($"No bundle named '{name}'.");
-            return false;
-        }
-
-        loadedBundle = AssetBundle.LoadFromStream(stream);
+        string path = Assembly.GetExecutingAssembly().Location;
+        path = Path.GetDirectoryName(path) ?? throw new NullReferenceException();
+        path = Path.Combine(path, name);
+        
+        loadedBundle = AssetBundle.LoadFromFile(path);
 
         if (loadedBundle == null)
         {

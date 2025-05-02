@@ -16,7 +16,7 @@ public class LethalBingo : BaseUnityPlugin
         Helpers.Logger.SetLogger(Logger);
 
         // Load bundle
-        if (!Bundle.LoadBundle("LethalBingo.Resources.lb-bundle"))
+        if (!Bundle.LoadBundle("LethalBingo.bundle"))
         {
             Helpers.Logger.Error("Failed to load the bundle. This mod will not continue further.");
             return;
@@ -47,18 +47,14 @@ public class LethalBingo : BaseUnityPlugin
 
     #region Prefabs
 
-    public static GameObject? BINGO_JOIN_FORM_PREFAB;
-    public static GameObject? BINGO_CREATE_FORM_PREFAB;
-    public static GameObject? BINGO_STATE_FORM_PREFAB;
+    public static GameObject? BINGO_MAIN_FORM_PREFAB;
     public static GameObject? BINGO_BOARD_PREFAB;
 
     private static void PreparePrefabs()
     {
         Helpers.Logger.Debug("Preparing prefabs...");
 
-        BINGO_JOIN_FORM_PREFAB = Bundle.LoadAsset<GameObject>("BingoJoinForm");
-        BINGO_CREATE_FORM_PREFAB = Bundle.LoadAsset<GameObject>("BingoCreateForm");
-        BINGO_STATE_FORM_PREFAB = Bundle.LoadAsset<GameObject>("BingoStateForm");
+        BINGO_MAIN_FORM_PREFAB = Bundle.LoadAsset<GameObject>("BingoMainForm");
         BINGO_BOARD_PREFAB = Bundle.LoadAsset<GameObject>("BingoBoard");
 
         Helpers.Logger.Debug("Finished preparing prefabs!");

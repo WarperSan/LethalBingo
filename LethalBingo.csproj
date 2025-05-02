@@ -65,12 +65,11 @@
     </PropertyGroup>
 
     <!-- BUILD EVENTS -->
-    <Target Name="MakeThunderStore" BeforeTargets="Build" Condition="!Exists('$(ProjectDir)ThunderStore')">
-        <Exec Command="mkdir ThunderStore"/>
+    <Target Name="MoveDll" AfterTargets="Build" Condition="Exists('$(TargetDir)$(TargetName).dll')">
+        <Copy SourceFiles="$(TargetDir)$(TargetName).dll" DestinationFiles="$(PluginPath)/$(TargetName).dll"/>
     </Target>
-
-    <Target Name="CopyREADME" AfterTargets="Build" Condition="Exists('$(ProjectDir)/README.md')">
-        <Copy SourceFiles="$(ProjectDir)/README.md" DestinationFiles="$(ProjectDir)ThunderStore/README.md"/>
+    <Target Name="MoveBundle" AfterTargets="Build">
+        <Copy SourceFiles="$(ProjectDir)/Resources/lb-bundle" DestinationFiles="$(PluginPath)/LethalBingo.bundle"/>
     </Target>
 
     <Import Project="../LC.targets"/>
