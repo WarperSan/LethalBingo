@@ -35,20 +35,9 @@ internal class MenuManager_Patches
         if (index != -1)
             ui.transform.SetSiblingIndex(index);
 
-        // Create forms
-        if (LethalBingo.BINGO_JOIN_FORM_PREFAB != null)
-            Object.Instantiate(LethalBingo.BINGO_JOIN_FORM_PREFAB, ui.transform, false);
+        if (LethalBingo.BINGO_MAIN_FORM_PREFAB != null)
+            Object.Instantiate(LethalBingo.BINGO_MAIN_FORM_PREFAB, ui.transform, false);
         else
-            Logger.Error("Could not spawn the join form.");
-
-        if (LethalBingo.BINGO_CREATE_FORM_PREFAB != null)
-            Object.Instantiate(LethalBingo.BINGO_CREATE_FORM_PREFAB, ui.transform, false);
-        else
-            Logger.Error("Could not spawn the create form.");
-
-        if (LethalBingo.BINGO_STATE_FORM_PREFAB != null)
-            Object.Instantiate(LethalBingo.BINGO_STATE_FORM_PREFAB, ui.transform, false);
-        else
-            Logger.Error("Could not spawn the state form.");
+            Logger.Error("Could not spawn the main form.");
     }
 }
