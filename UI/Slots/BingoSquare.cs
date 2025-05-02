@@ -14,14 +14,14 @@ public abstract class BingoSquare : MonoBehaviour
     #region Markings
 
     /// <summary>
-    /// Caches the marking for all the given teams
+    ///     Caches the marking for all the given teams
     /// </summary>
     public virtual void CacheMarkings(BingoTeam[] teams)
     {
     }
 
     /// <summary>
-    /// Sets this slot to have the given teams selected
+    ///     Sets this slot to have the given teams selected
     /// </summary>
     public abstract void SetTeams(BingoTeam[] teams);
 

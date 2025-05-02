@@ -1,4 +1,5 @@
-﻿using BingoAPI.Data;
+﻿using System.Globalization;
+using BingoAPI.Data;
 using BingoAPI.Extensions;
 using TMPro;
 using UnityEngine;
@@ -10,49 +11,6 @@ namespace LethalBingo.UI;
 
 public class ColorElement : MonoBehaviour
 {
-    #region Fields
-
-    [Header("Fields")] 
-    [SerializeField] private Graphic? coloringElement;
-    [SerializeField] private TextMeshProUGUI? text;
-    [SerializeField] private Button? button;
-    [SerializeField] private Graphic? darkenElement;
-
-    #endregion
-
-    #region Setters
-
-    private BingoTeam team;
-
-    public BingoTeam Team
-    {
-        set
-        {
-            team = value;
-            SetText(team);
-            SetColor(team);
-        }
-    }
-
-    private void SetText(BingoTeam _team)
-    {
-        string teamName = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(_team.ToString().ToLower());
-        text?.SetText(teamName);
-    }
-        
-    private void SetColor(BingoTeam _team)
-    {
-        if (coloringElement != null)
-            coloringElement.color = _team.GetColor();
-    }
-
-    private void Start()
-    {
-        button?.onClick.AddListener(() => LethalBingo.CurrentClient?.ChangeTeam(team));
-    }
-
-    #endregion
-
     private void OnEnable()
     {
         if (button != null)
@@ -78,4 +36,47 @@ public class ColorElement : MonoBehaviour
             darkenElement.color = c;
         }
     }
+
+    #region Fields
+
+    [Header("Fields")] [SerializeField] private Graphic? coloringElement;
+
+    [SerializeField] private TextMeshProUGUI? text;
+    [SerializeField] private Button? button;
+    [SerializeField] private Graphic? darkenElement;
+
+    #endregion
+
+    #region Setters
+
+    private BingoTeam team;
+
+    public BingoTeam Team
+    {
+        set
+        {
+            team = value;
+            SetText(team);
+            SetColor(team);
+        }
+    }
+
+    private void SetText(BingoTeam _team)
+    {
+        var teamName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(_team.ToString().ToLower());
+        text?.SetText(teamName);
+    }
+
+    private void SetColor(BingoTeam _team)
+    {
+        if (coloringElement != null)
+            coloringElement.color = _team.GetColor();
+    }
+
+    private void Start()
+    {
+        button?.onClick.AddListener(() => LethalBingo.CurrentClient?.ChangeTeam(team));
+    }
+
+    #endregion
 }

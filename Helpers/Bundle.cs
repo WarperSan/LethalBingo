@@ -1,21 +1,22 @@
-﻿using UnityEngine;
+﻿using System.Reflection;
+using UnityEngine;
 
 namespace LethalBingo.Helpers;
 
 /// <summary>
-/// Helper to load a bundle
+///     Helper to load a bundle
 /// </summary>
 internal static class Bundle
 {
     private static AssetBundle? loadedBundle;
 
     /// <summary>
-    /// Tries to load the bundle with the given name
+    ///     Tries to load the bundle with the given name
     /// </summary>
     /// <returns>Success of the load</returns>
     public static bool LoadBundle(string name)
     {
-        var stream = System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream(name);
+        var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(name);
 
         if (stream == null)
         {
@@ -24,18 +25,18 @@ internal static class Bundle
         }
 
         loadedBundle = AssetBundle.LoadFromStream(stream);
-        
+
         if (loadedBundle == null)
         {
             Logger.Error("Failed to load custom assets.");
             return false;
         }
-        
+
         return true;
     }
 
     /// <summary>
-    /// Tries to load the asset of the given name in the current bundle
+    ///     Tries to load the asset of the given name in the current bundle
     /// </summary>
     /// <returns>Asset loaded or null</returns>
     public static T? LoadAsset<T>(string name) where T : Object
@@ -50,7 +51,7 @@ internal static class Bundle
 
         if (asset == null)
             Logger.Error($"No asset named '{name}' was found.");
-        
+
         return asset;
     }
 }

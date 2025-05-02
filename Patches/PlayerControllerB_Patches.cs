@@ -13,7 +13,7 @@ internal class PlayerControllerB_Patches
     private static void PlayerLoad(PlayerControllerB __instance)
     {
         var parent = CreateBoardParent();
-        
+
         if (parent == null)
             return;
 
@@ -34,8 +34,8 @@ internal class PlayerControllerB_Patches
         // Create parent
         var bingoParent = new GameObject(nameof(LethalBingo) + "Bingo-InGame-UI");
         bingoParent.transform.SetParent(canvas.transform, false);
-        
-        int index = canvas.transform.Find(Constants.SIBLING_BEFORE)?.GetSiblingIndex() ?? -1;
+
+        var index = canvas.transform.Find(Constants.SIBLING_BEFORE)?.GetSiblingIndex() ?? -1;
 
         if (index >= 0)
             bingoParent.transform.SetSiblingIndex(index);
@@ -53,7 +53,7 @@ internal class PlayerControllerB_Patches
 
     private static void CreateBoard(Transform parent)
     {
-        if (LethalBingo.BINGO_BOARD_PREFAB is null) 
+        if (LethalBingo.BINGO_BOARD_PREFAB is null)
             return;
 
         Object.Instantiate(LethalBingo.BINGO_BOARD_PREFAB, parent, false);

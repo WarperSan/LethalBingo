@@ -5,7 +5,8 @@ Thank you for using the mod template! Here are a few tips to help you on your jo
 ## Versioning
 
 BepInEx uses [semantic versioning, or semver](https://semver.org/), for the mod's version info.
-To increment it, you can either modify the version tag in the `.csproj` file directly, or use your IDE's UX to increment the version. Below is an example of modifying the `.csproj` file directly:
+To increment it, you can either modify the version tag in the `.csproj` file directly, or use your IDE's UX to increment
+the version. Below is an example of modifying the `.csproj` file directly:
 
 ```xml
 <!-- BepInEx Properties -->
@@ -52,10 +53,12 @@ To make a new harmony patch, just use `[HarmonyPatch]` before any class you make
 
 Then in that class, you can use
 `[HarmonyPatch(typeof(ClassToPatch), "MethodToPatch")]`
-where `ClassToPatch` is the class you're patching (ie `TVScript`), and `MethodToPatch` is the method you're patching (ie `SwitchTVLocalClient`).
+where `ClassToPatch` is the class you're patching (ie `TVScript`), and `MethodToPatch` is the method you're patching (
+ie `SwitchTVLocalClient`).
 
 Then you can use
-[the appropriate prefix, postfix, transpiler, or finalizer](https://harmony.pardeike.net/articles/patching.html) attribute.
+[the appropriate prefix, postfix, transpiler, or finalizer](https://harmony.pardeike.net/articles/patching.html)
+attribute.
 
 _While you can use_ `return false;` _in a prefix patch,
 it is **HIGHLY DISCOURAGED** as it can **AND WILL** cause compatibility issues with other mods._

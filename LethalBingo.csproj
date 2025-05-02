@@ -54,9 +54,9 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Reference Include="BingoAPI">
-        <HintPath>..\..\MODS\lethal-company\profiles\LethalBingo\BepInEx\plugins\WarperSan-BingoAPI\BingoAPI.dll</HintPath>
-      </Reference>
+        <Reference Include="BingoAPI">
+            <HintPath>..\..\MODS\lethal-company\profiles\LethalBingo\BepInEx\plugins\WarperSan-BingoAPI\BingoAPI.dll</HintPath>
+        </Reference>
     </ItemGroup>
 
     <!-- Targets -->
@@ -73,7 +73,7 @@
         <Copy SourceFiles="$(ProjectDir)/README.md" DestinationFiles="$(ProjectDir)ThunderStore/README.md"/>
     </Target>
 
-    <Import Project="../LC.targets" />
+    <Import Project="../LC.targets"/>
     <Target Name="NetcodePatch" AfterTargets="PostBuildEvent">
         <Exec Command="netcode-patch -nv 1.5.2 &quot;$(TargetPath)&quot; @(ReferencePathWithRefAssemblies->'&quot;%(Identity)&quot;', ' ')"/>
     </Target>

@@ -19,7 +19,7 @@ internal class MenuManager_Patches
             Logger.Error($"Could not find the container at '{Constants.MENU_CONTAINER_PATH}'.");
             return;
         }
-        
+
         // Create ui
         var ui = new GameObject(nameof(LethalBingo) + "_UI");
         ui.transform.SetParent(container.transform, false);
@@ -29,18 +29,18 @@ internal class MenuManager_Patches
         rect.anchorMax = Vector2.one;
         rect.anchoredPosition = Vector2.zero;
         rect.offsetMin = rect.offsetMax = Vector2.zero;
-        
+
         var index = container.transform.Find("LobbyHostSettings")?.GetSiblingIndex() ?? -1;
-        
+
         if (index != -1)
             ui.transform.SetSiblingIndex(index);
-        
+
         // Create forms
         if (LethalBingo.BINGO_JOIN_FORM_PREFAB != null)
             Object.Instantiate(LethalBingo.BINGO_JOIN_FORM_PREFAB, ui.transform, false);
         else
             Logger.Error("Could not spawn the join form.");
-        
+
         if (LethalBingo.BINGO_CREATE_FORM_PREFAB != null)
             Object.Instantiate(LethalBingo.BINGO_CREATE_FORM_PREFAB, ui.transform, false);
         else

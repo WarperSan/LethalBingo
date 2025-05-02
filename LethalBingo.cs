@@ -7,11 +7,11 @@ using UnityEngine;
 namespace LethalBingo;
 
 [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
-[BepInDependency(BingoAPI.MyPluginInfo.PLUGIN_GUID)]
+[BepInDependency(MyPluginInfo.PLUGIN_GUID)]
 public class LethalBingo : BaseUnityPlugin
 {
     public static BingoClient? CurrentClient;
-    
+
     private void Awake()
     {
         Helpers.Logger.SetLogger(Logger);
@@ -52,7 +52,7 @@ public class LethalBingo : BaseUnityPlugin
     public static GameObject? BINGO_CREATE_FORM_PREFAB;
     public static GameObject? BINGO_STATE_FORM_PREFAB;
     public static GameObject? BINGO_BOARD_PREFAB;
-    
+
     private static void PreparePrefabs()
     {
         Helpers.Logger.Debug("Preparing prefabs...");
@@ -61,7 +61,7 @@ public class LethalBingo : BaseUnityPlugin
         BINGO_CREATE_FORM_PREFAB = Bundle.LoadAsset<GameObject>("BingoCreateForm");
         BINGO_STATE_FORM_PREFAB = Bundle.LoadAsset<GameObject>("BingoStateForm");
         BINGO_BOARD_PREFAB = Bundle.LoadAsset<GameObject>("BingoBoard");
-        
+
         Helpers.Logger.Debug("Finished preparing prefabs!");
     }
 

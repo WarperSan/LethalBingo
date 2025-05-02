@@ -12,6 +12,36 @@ namespace LethalBingo.UI.Forms;
 
 public class BingoJoinForm : MonoBehaviour
 {
+    private MenuManager? _menuManager;
+
+    private void Start()
+    {
+        _menuManager = FindObjectOfType<MenuManager>();
+
+        openBtn?.onClick.AddListener(OpenForm);
+        openBtn?.onClick.AddListener(_menuManager.PlayConfirmSFX);
+
+        closeBtn?.onClick.AddListener(CloseForm);
+        closeBtn?.onClick.AddListener(_menuManager.PlayCancelSFX);
+
+        joinBtn?.onClick.AddListener(SubmitJoin);
+
+        if (userNickname != null && SteamClient.IsValid)
+            userNickname.text = new Friend(SteamClient.SteamId.Value).Name;
+    }
+
+    private void OnEnable()
+    {
+        BingoClient.OnSelfConnected.AddListener(OnConnected);
+        BingoClient.OnSelfDisconnected.AddListener(OnDisconnected);
+    }
+
+    private void OnDisable()
+    {
+        BingoClient.OnSelfConnected.RemoveListener(OnConnected);
+        BingoClient.OnSelfDisconnected.RemoveListener(OnDisconnected);
+    }
+
     #region Fields
 
     [Header("Fields")] [SerializeField] private TMP_InputField? roomCode;
@@ -44,10 +74,8 @@ public class BingoJoinForm : MonoBehaviour
         ];
 
         foreach (var field in fields)
-        {
             if (field != null)
                 field.interactable = isEnable;
-        }
     }
 
     private void SubmitJoin()
@@ -87,7 +115,7 @@ public class BingoJoinForm : MonoBehaviour
     private async void TryConnect(string code, string password, string nickname, bool isSpectator)
     {
         var client = await API.JoinRoom<LethalBingoClient>(code, password, nickname, isSpectator, false);
-        
+
         SetActiveJoinForm(true);
 
         if (client != null)
@@ -95,7 +123,7 @@ public class BingoJoinForm : MonoBehaviour
             LethalBingo.CurrentClient = client;
             return;
         }
-            
+
         _menuManager?.DisplayMenuNotification("An error has occured while joining the room.", "Okay");
     }
 
@@ -106,8 +134,15 @@ public class BingoJoinForm : MonoBehaviour
     [Header("Animations")] [SerializeField]
     private Animator? animator;
 
-    private void OpenForm() => animator?.SetTrigger(OpenMenu);
-    private void CloseForm() => animator?.SetTrigger(CloseMenu);
+    private void OpenForm()
+    {
+        animator?.SetTrigger(OpenMenu);
+    }
+
+    private void CloseForm()
+    {
+        animator?.SetTrigger(CloseMenu);
+    }
 
     private static readonly int OpenMenu = Animator.StringToHash("openMenu");
     private static readonly int CloseMenu = Animator.StringToHash("closeMenu");
@@ -120,7 +155,7 @@ public class BingoJoinForm : MonoBehaviour
     {
         CloseForm();
         openBtn?.gameObject.SetActive(false);
-            
+
         _menuManager?.DisplayMenuNotification("You successfully joined the room.", "Okay");
     }
 
@@ -131,34 +166,4 @@ public class BingoJoinForm : MonoBehaviour
     }
 
     #endregion
-
-    private MenuManager? _menuManager;
-
-    private void Start()
-    {
-        _menuManager = FindObjectOfType<MenuManager>();
-
-        openBtn?.onClick.AddListener(OpenForm);
-        openBtn?.onClick.AddListener(_menuManager.PlayConfirmSFX);
-
-        closeBtn?.onClick.AddListener(CloseForm);
-        closeBtn?.onClick.AddListener(_menuManager.PlayCancelSFX);
-
-        joinBtn?.onClick.AddListener(SubmitJoin);
-
-        if (userNickname != null && SteamClient.IsValid)
-            userNickname.text = new Friend(SteamClient.SteamId.Value).Name;
-    }
-
-    private void OnEnable()
-    {
-        BingoClient.OnSelfConnected.AddListener(OnConnected);
-        BingoClient.OnSelfDisconnected.AddListener(OnDisconnected);
-    }
-
-    private void OnDisable()
-    {
-        BingoClient.OnSelfConnected.RemoveListener(OnConnected);
-        BingoClient.OnSelfDisconnected.RemoveListener(OnDisconnected);
-    }
 }

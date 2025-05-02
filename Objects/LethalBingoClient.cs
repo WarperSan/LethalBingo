@@ -14,7 +14,7 @@ public class LethalBingoClient : BingoClient
 
     #region Events
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     protected override void OnOtherMessageReceived(PlayerData player, string content, ulong timestamp)
     {
         if (HUDManager.Instance == null)
@@ -26,8 +26,9 @@ public class LethalBingoClient : BingoClient
             return;
 
         var teamColor = player.Team.GetHexColor();
-        
-        HUDManager.Instance.AddTextToChatOnServer($"<color={teamColor}>{player.Name}</color>: <color=#FFFF00>{content}</color>");
+
+        HUDManager.Instance.AddTextToChatOnServer(
+            $"<color={teamColor}>{player.Name}</color>: <color=#FFFF00>{content}</color>");
     }
 
     #endregion

@@ -12,7 +12,7 @@ internal class HUDManager_Patches
         // If message from system, skip
         if (playerId == -1)
             return;
-        
+
         // If no client, skip
         if (LethalBingo.CurrentClient == null)
             return;

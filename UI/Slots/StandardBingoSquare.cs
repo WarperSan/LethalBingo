@@ -13,15 +13,11 @@ public class StandardBingoSquare : BingoSquare
 {
     #region Fields
 
-    [Header("Fields")]
-    [SerializeField]
-    private TextMeshProUGUI? _text;
+    [Header("Fields")] [SerializeField] private TextMeshProUGUI? _text;
 
-    [SerializeField] 
-    private Transform? _markings;
+    [SerializeField] private Transform? _markings;
 
-    [SerializeField]
-    private GameObject? _markingPrefab;
+    [SerializeField] private GameObject? _markingPrefab;
 
     #endregion
 
@@ -29,13 +25,13 @@ public class StandardBingoSquare : BingoSquare
 
     private Dictionary<BingoTeam, GameObject?>? cachedMarkings;
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public override void DisplayText(string text)
     {
         _text?.SetText(text);
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public override void CacheMarkings(BingoTeam[] teams)
     {
         cachedMarkings = [];
@@ -45,7 +41,7 @@ public class StandardBingoSquare : BingoSquare
             var newMark = Instantiate(_markingPrefab, _markings);
 
             cachedMarkings[team] = newMark;
-                
+
             if (newMark == null)
                 continue;
 
@@ -55,7 +51,7 @@ public class StandardBingoSquare : BingoSquare
         }
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public override void SetTeams(BingoTeam[] teams)
     {
         if (cachedMarkings == null)
@@ -64,17 +60,17 @@ public class StandardBingoSquare : BingoSquare
         // Disable all markings
         foreach (var (_, o) in cachedMarkings)
             o?.SetActive(false);
-            
+
         // If blank, skip
         if (teams.Length == 0)
             return;
 
         // Enable active markins
-        foreach (BingoTeam team in teams)
+        foreach (var team in teams)
         {
             if (!cachedMarkings.TryGetValue(team, out var o) || o == null)
                 continue;
-                
+
             o.SetActive(true);
         }
     }
