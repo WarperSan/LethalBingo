@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
-using BingoAPI;
-using BingoAPI.Data;
+using BingoAPI.Models;
 using BingoAPI.Extensions;
+using BingoAPI.Managers;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -25,21 +25,21 @@ public class BingoStateForm : MonoBehaviour
 
         leaveBtn?.onClick.AddListener(SubmitLeave);
 
-        SetColors(BingoTeamExtension.GetAllTeams());
+        SetColors(TeamExtension.GetAllTeams());
     }
 
     private void OnEnable()
     {
-        BingoClient.OnSelfConnected.AddListener(OnConnected);
-        BingoClient.OnSelfDisconnected.AddListener(OnDisconnected);
-        BingoClient.OnSelfTeamChanged.AddListener(OnTeamChanged);
+        ClientEventManager.OnSelfConnected.AddListener(OnConnected);
+        ClientEventManager.OnSelfDisconnected.AddListener(OnDisconnected);
+        ClientEventManager.OnSelfTeamChanged.AddListener(OnTeamChanged);
     }
 
     private void OnDisable()
     {
-        BingoClient.OnSelfConnected.RemoveListener(OnConnected);
-        BingoClient.OnSelfDisconnected.RemoveListener(OnDisconnected);
-        BingoClient.OnSelfTeamChanged.RemoveListener(OnTeamChanged);
+        ClientEventManager.OnSelfConnected.RemoveListener(OnConnected);
+        ClientEventManager.OnSelfDisconnected.RemoveListener(OnDisconnected);
+        ClientEventManager.OnSelfTeamChanged.RemoveListener(OnTeamChanged);
     }
 
     #region Fields
@@ -117,9 +117,9 @@ public class BingoStateForm : MonoBehaviour
 
     [SerializeField] private GameObject? colorPrefab;
 
-    private Dictionary<BingoTeam, ColorElement>? buttonForColor;
+    private Dictionary<Team, ColorElement>? buttonForColor;
 
-    private void SetColors(BingoTeam[] teams)
+    private void SetColors(Team[] teams)
     {
         if (colorParent == null || colorPrefab == null)
             return;
@@ -132,7 +132,7 @@ public class BingoStateForm : MonoBehaviour
 
         foreach (var team in teams)
         {
-            if (team == BingoTeam.BLANK)
+            if (team == Team.BLANK)
                 continue;
 
             // Append team colors
@@ -153,7 +153,7 @@ public class BingoStateForm : MonoBehaviour
         }
     }
 
-    private void SetSelectedColor(BingoTeam team)
+    private void SetSelectedColor(Team team)
     {
         if (buttonForColor == null)
             return;
@@ -183,7 +183,7 @@ public class BingoStateForm : MonoBehaviour
         _menuManager?.DisplayMenuNotification("You successfully left the room.", "Thank you");
     }
 
-    private void OnTeamChanged(PlayerData player, BingoTeam oldTeam, BingoTeam newTeam)
+    private void OnTeamChanged(PlayerData player, Team oldTeam, Team newTeam)
     {
         if (buttonForColor == null)
             return;

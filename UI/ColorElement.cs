@@ -1,5 +1,5 @@
 ﻿using System.Globalization;
-using BingoAPI.Data;
+using BingoAPI.Models;
 using BingoAPI.Extensions;
 using TMPro;
 using UnityEngine;
@@ -49,9 +49,9 @@ public class ColorElement : MonoBehaviour
 
     #region Setters
 
-    private BingoTeam team;
+    private Team team;
 
-    public BingoTeam Team
+    public Team Team
     {
         set
         {
@@ -61,13 +61,13 @@ public class ColorElement : MonoBehaviour
         }
     }
 
-    private void SetText(BingoTeam _team)
+    private void SetText(Team _team)
     {
         var teamName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(_team.ToString().ToLower());
         text?.SetText(teamName);
     }
 
-    private void SetColor(BingoTeam _team)
+    private void SetColor(Team _team)
     {
         if (coloringElement != null)
             coloringElement.color = _team.GetColor();

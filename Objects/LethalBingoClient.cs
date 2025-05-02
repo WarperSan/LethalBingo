@@ -1,6 +1,6 @@
 ﻿using System.Net.WebSockets;
 using BingoAPI;
-using BingoAPI.Data;
+using BingoAPI.Models;
 using BingoAPI.Extensions;
 
 namespace LethalBingo.Objects;

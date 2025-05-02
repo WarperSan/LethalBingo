@@ -1,6 +1,6 @@
-﻿using BingoAPI;
-using BingoAPI.Data;
+﻿using BingoAPI.Models;
 using BingoAPI.Extensions;
+using BingoAPI.Managers;
 using LethalBingo.UI.Slots;
 using UnityEngine;
 
@@ -23,18 +23,18 @@ public class BingoBoard : MonoBehaviour
 
     private void OnEnable()
     {
-        BingoClient.OnSelfMarked.AddListener(OnSquareMarked);
-        BingoClient.OnOtherMarked.AddListener(OnSquareMarked);
-        BingoClient.OnSelfCleared.AddListener(OnSquareCleared);
-        BingoClient.OnOtherCleared.AddListener(OnSquareCleared);
+        ClientEventManager.OnSelfMarked.AddListener(OnSquareMarked);
+        ClientEventManager.OnOtherMarked.AddListener(OnSquareMarked);
+        ClientEventManager.OnSelfCleared.AddListener(OnSquareCleared);
+        ClientEventManager.OnOtherCleared.AddListener(OnSquareCleared);
     }
 
     private void OnDisable()
     {
-        BingoClient.OnSelfMarked.RemoveListener(OnSquareMarked);
-        BingoClient.OnOtherMarked.RemoveListener(OnSquareMarked);
-        BingoClient.OnSelfCleared.RemoveListener(OnSquareCleared);
-        BingoClient.OnOtherCleared.RemoveListener(OnSquareCleared);
+        ClientEventManager.OnSelfMarked.RemoveListener(OnSquareMarked);
+        ClientEventManager.OnOtherMarked.RemoveListener(OnSquareMarked);
+        ClientEventManager.OnSelfCleared.RemoveListener(OnSquareCleared);
+        ClientEventManager.OnOtherCleared.RemoveListener(OnSquareCleared);
     }
 
     private async void FetchBoard()
@@ -50,7 +50,7 @@ public class BingoBoard : MonoBehaviour
         if (board == null)
             return;
 
-        var allTeams = BingoTeamExtension.GetAllTeams();
+        var allTeams = TeamExtension.GetAllTeams();
 
         squares = new BingoSquare[board.Length + 1];
 

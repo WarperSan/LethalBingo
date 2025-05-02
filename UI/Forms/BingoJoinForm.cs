@@ -1,5 +1,6 @@
 using BingoAPI;
-using BingoAPI.Data;
+using BingoAPI.Managers;
+using BingoAPI.Models;
 using LethalBingo.Objects;
 using Steamworks;
 using TMPro;
@@ -32,14 +33,14 @@ public class BingoJoinForm : MonoBehaviour
 
     private void OnEnable()
     {
-        BingoClient.OnSelfConnected.AddListener(OnConnected);
-        BingoClient.OnSelfDisconnected.AddListener(OnDisconnected);
+        ClientEventManager.OnSelfConnected.AddListener(OnConnected);
+        ClientEventManager.OnSelfDisconnected.AddListener(OnDisconnected);
     }
 
     private void OnDisable()
     {
-        BingoClient.OnSelfConnected.RemoveListener(OnConnected);
-        BingoClient.OnSelfDisconnected.RemoveListener(OnDisconnected);
+        ClientEventManager.OnSelfConnected.RemoveListener(OnConnected);
+        ClientEventManager.OnSelfDisconnected.RemoveListener(OnDisconnected);
     }
 
     #region Fields

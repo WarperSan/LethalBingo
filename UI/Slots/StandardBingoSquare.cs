@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using BingoAPI.Data;
+using BingoAPI.Models;
 using BingoAPI.Extensions;
 using TMPro;
 using UnityEngine;
@@ -23,7 +23,7 @@ public class StandardBingoSquare : BingoSquare
 
     #region BingoSquare
 
-    private Dictionary<BingoTeam, GameObject?>? cachedMarkings;
+    private Dictionary<Team, GameObject?>? cachedMarkings;
 
     /// <inheritdoc />
     public override void DisplayText(string text)
@@ -32,7 +32,7 @@ public class StandardBingoSquare : BingoSquare
     }
 
     /// <inheritdoc />
-    public override void CacheMarkings(BingoTeam[] teams)
+    public override void CacheMarkings(Team[] teams)
     {
         cachedMarkings = [];
 
@@ -52,7 +52,7 @@ public class StandardBingoSquare : BingoSquare
     }
 
     /// <inheritdoc />
-    public override void SetTeams(BingoTeam[] teams)
+    public override void SetTeams(Team[] teams)
     {
         if (cachedMarkings == null)
             return;

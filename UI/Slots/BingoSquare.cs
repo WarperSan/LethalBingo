@@ -1,4 +1,4 @@
-using BingoAPI.Data;
+using BingoAPI.Models;
 using UnityEngine;
 
 namespace LethalBingo.UI.Slots;
@@ -16,14 +16,14 @@ public abstract class BingoSquare : MonoBehaviour
     /// <summary>
     ///     Caches the marking for all the given teams
     /// </summary>
-    public virtual void CacheMarkings(BingoTeam[] teams)
+    public virtual void CacheMarkings(Team[] teams)
     {
     }
 
     /// <summary>
     ///     Sets this slot to have the given teams selected
     /// </summary>
-    public abstract void SetTeams(BingoTeam[] teams);
+    public abstract void SetTeams(Team[] teams);
 
     #endregion
 }
