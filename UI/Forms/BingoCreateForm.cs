@@ -28,7 +28,7 @@ public class BingoCreateForm : MonoBehaviour
         
         if (goalForm != null)
             openGoalListBtn?.onClick.AddListener(goalForm.OpenForm);
-        openGoalListBtn?.onClick.AddListener(_menuManager.PlayCancelSFX);
+        openGoalListBtn?.onClick.AddListener(_menuManager.PlayConfirmSFX);
 
         createBtn?.onClick.AddListener(SubmitCreate);
 
