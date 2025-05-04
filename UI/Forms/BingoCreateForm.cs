@@ -1,6 +1,7 @@
-﻿using BingoAPI;
+﻿using System.Collections.Generic;
 using BingoAPI.Managers;
 using BingoAPI.Models;
+using BingoAPI.Models.Settings;
 using LethalBingo.Objects;
 using Steamworks;
 using TMPro;
@@ -24,6 +25,10 @@ public class BingoCreateForm : MonoBehaviour
 
         closeBtn?.onClick.AddListener(CloseForm);
         closeBtn?.onClick.AddListener(_menuManager.PlayCancelSFX);
+        
+        if (goalForm != null)
+            openGoalListBtn?.onClick.AddListener(goalForm.OpenForm);
+        openGoalListBtn?.onClick.AddListener(_menuManager.PlayCancelSFX);
 
         createBtn?.onClick.AddListener(SubmitCreate);
 
@@ -63,6 +68,10 @@ public class BingoCreateForm : MonoBehaviour
 
     [SerializeField] private TMP_InputField? boardJson;
 
+    [SerializeField] private Button? openGoalListBtn;
+
+    [SerializeField] private BingoGoalForm? goalForm;
+    
     [SerializeField] private Button? createBtn;
 
     [SerializeField] private Button? openBtn;
@@ -86,6 +95,7 @@ public class BingoCreateForm : MonoBehaviour
             hideCard,
             seed,
             boardJson,
+            openGoalListBtn,
             createBtn
         ];
 
@@ -125,12 +135,13 @@ public class BingoCreateForm : MonoBehaviour
 
         var isRandomized = randomized?.isOn ?? false;
 
-        var _boardJSON = boardJson?.text.Trim() ?? "";
-        if (_boardJSON.Length == 0)
+        var goals = GoalManager.GetAllGoals();
+        var activeGoals = new List<Goal>();
+
+        foreach (var goal in goals)
         {
-            _menuManager?.DisplayMenuNotification("Please enter a valid JSON board.", "Okay");
-            SetActiveCreateForm(true);
-            return;
+            if (goal.IsActive)
+                activeGoals.Add(goal);
         }
 
         var isLockout = lockout?.isOn ?? false;
@@ -140,31 +151,26 @@ public class BingoCreateForm : MonoBehaviour
         var isSpectator = joinAsSpectator?.isOn ?? false;
 
         var _hideCard = hideCard?.isOn ?? false;
+        
+        var settings = new CreateRoomSettings
+        {
+            Name = _name,
+            Password = password,
+            Nickname = nickName,
+            IsRandomized = isRandomized,
+            Goals = activeGoals.ToArray(),
+            IsLockout = isLockout,
+            Seed = _seed,
+            IsSpectator = isSpectator,
+            HideCard = _hideCard
+        };
 
-        TryCreate(_name, password, nickName, isRandomized, _boardJSON, isLockout, _seed, isSpectator, _hideCard);
+        TryCreate(settings);
     }
 
-    private async void TryCreate(
-        string _name,
-        string password,
-        string nickName,
-        bool isRandomized,
-        string boardJSON,
-        bool isLockout,
-        string _seed,
-        bool isSpectator,
-        bool _hideCard)
+    private async void TryCreate(CreateRoomSettings settings)
     {
-        var client = await API.CreateRoom<LethalBingoClient>(
-            _name,
-            password,
-            nickName,
-            isRandomized,
-            boardJSON,
-            isLockout,
-            _seed, isSpectator,
-            _hideCard
-        );
+        var client = await BingoAPI.Bingo.API.CreateRoom<LethalBingoClient>(settings);
 
         SetActiveCreateForm(true);
 

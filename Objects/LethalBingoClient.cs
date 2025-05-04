@@ -1,17 +1,11 @@
-﻿using System.Net.WebSockets;
-using BingoAPI;
+﻿using BingoAPI.Bingo;
 using BingoAPI.Models;
 using BingoAPI.Extensions;
 
 namespace LethalBingo.Objects;
 
-// ReSharper disable once ClassNeverInstantiated.Global
 public class LethalBingoClient : BingoClient
 {
-    public LethalBingoClient(ClientWebSocket socket, bool isCreator) : base(socket, isCreator)
-    {
-    }
-
     #region Events
 
     /// <inheritdoc />

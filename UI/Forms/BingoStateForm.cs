@@ -74,16 +74,12 @@ public class BingoStateForm : MonoBehaviour
         TryDisconnect();
     }
 
-    private async void TryDisconnect()
+    private void TryDisconnect()
     {
-        var success = LethalBingo.CurrentClient == null || await LethalBingo.CurrentClient.Disconnect();
+        LethalBingo.CurrentClient?.Disconnect();
+        LethalBingo.CurrentClient = null;
 
         SetActiveJoinForm(true);
-
-        if (success)
-            return;
-
-        _menuManager?.DisplayMenuNotification("An error has occured while leaving the room.", "Okay");
     }
 
     #endregion

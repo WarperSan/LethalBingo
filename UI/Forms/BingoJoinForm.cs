@@ -1,6 +1,6 @@
-using BingoAPI;
 using BingoAPI.Managers;
 using BingoAPI.Models;
+using BingoAPI.Models.Settings;
 using LethalBingo.Objects;
 using Steamworks;
 using TMPro;
@@ -110,12 +110,20 @@ public class BingoJoinForm : MonoBehaviour
 
         var isSpectator = joinAsSpectator?.isOn ?? true;
 
-        TryConnect(code, password, nickname, isSpectator);
+        var settings = new JoinRoomSettings
+        {
+            Code = code,
+            Password = password,
+            Nickname = nickname,
+            IsSpectator = isSpectator
+        };
+
+        TryConnect(settings);
     }
 
-    private async void TryConnect(string code, string password, string nickname, bool isSpectator)
+    private async void TryConnect(JoinRoomSettings settings)
     {
-        var client = await API.JoinRoom<LethalBingoClient>(code, password, nickname, isSpectator, false);
+        var client = await BingoAPI.Bingo.API.JoinRoom<LethalBingoClient>(settings);
 
         SetActiveJoinForm(true);
 

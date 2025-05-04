@@ -1,5 +1,6 @@
 using BepInEx;
-using BingoAPI;
+using BingoAPI.Bingo;
+using BingoAPI.Managers;
 using HarmonyLib;
 using LethalBingo.Helpers;
 using UnityEngine;
@@ -16,7 +17,7 @@ public class LethalBingo : BaseUnityPlugin
         Helpers.Logger.SetLogger(Logger);
 
         // Load bundle
-        if (!Bundle.LoadBundle("LethalBingo.bundle"))
+        if (!Bundle.LoadBundle("lb-bundle"))
         {
             Helpers.Logger.Error("Failed to load the bundle. This mod will not continue further.");
             return;
@@ -24,6 +25,9 @@ public class LethalBingo : BaseUnityPlugin
 
         PreparePrefabs();
         ApplyPatches();
+
+        for (int i = 0; i < 100; i++)
+            GoalManager.RegisterGoal("goal.test." + i, "Test Goal #" + i);
 
         Logger.LogInfo($"{MyPluginInfo.PLUGIN_GUID} v{MyPluginInfo.PLUGIN_VERSION} has loaded!");
     }

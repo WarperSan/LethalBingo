@@ -70,7 +70,7 @@
         <Copy SourceFiles="$(TargetDir)$(TargetName).dll" DestinationFiles="$(PluginPath)/$(TargetName).dll"/>
     </Target>
     <Target Name="MoveBundle" AfterTargets="Build">
-        <Copy SourceFiles="$(ProjectDir)/Resources/lb-bundle" DestinationFiles="$(PluginPath)/LethalBingo.bundle"/>
+        <Copy SourceFiles="$(ProjectDir)/Resources/lb-bundle" DestinationFiles="$(PluginPath)/lb-bundle"/>
     </Target>
 
     <Import Project="../LC.targets"/>
