@@ -66,8 +66,6 @@ public class BingoCreateForm : MonoBehaviour
 
     [SerializeField] private TMP_InputField? seed;
 
-    [SerializeField] private TMP_InputField? boardJson;
-
     [SerializeField] private Button? openGoalListBtn;
 
     [SerializeField] private BingoGoalForm? goalForm;
@@ -94,7 +92,6 @@ public class BingoCreateForm : MonoBehaviour
             lockout,
             hideCard,
             seed,
-            boardJson,
             openGoalListBtn,
             createBtn
         ];
@@ -142,6 +139,13 @@ public class BingoCreateForm : MonoBehaviour
         {
             if (goal.IsActive)
                 activeGoals.Add(goal);
+        }
+
+        if (activeGoals.Count < BingoAPI.Bingo.Constants.BINGO_SIZE)
+        {
+            _menuManager?.DisplayMenuNotification($"Please select at least {BingoAPI.Bingo.Constants.BINGO_SIZE} goals.", "Okay");
+            SetActiveCreateForm(true);
+            return;
         }
 
         var isLockout = lockout?.isOn ?? false;
