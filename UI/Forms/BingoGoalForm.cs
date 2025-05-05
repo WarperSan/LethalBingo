@@ -24,6 +24,7 @@ public class BingoGoalForm : MonoBehaviour
 
         var loadedGoals = GoalManager.GetAllGoals();
         SetGoals(loadedGoals);
+        UpdateGoalCount();
     }
 
     #region Fields
@@ -33,6 +34,8 @@ public class BingoGoalForm : MonoBehaviour
     [SerializeField] private GameObject? goalItemPrefab;
 
     [SerializeField] private GameObject? noGoalText;
+
+    [SerializeField] private TextMeshProUGUI? goalCountText;
 
     [SerializeField] private TMP_InputField? searchBar;
 
@@ -70,7 +73,12 @@ public class BingoGoalForm : MonoBehaviour
         var newItem = Instantiate(goalItemPrefab, goalListContainer, false);
 
         if (newItem.TryGetComponent(out GoalItemElement goalItem))
+        {
             goalItem.SetGoal(goal);
+            
+            goalItem.OnActiveChanged?.AddListener(isActive => GoalManager.SetActiveGoal(goal.GUID, isActive));
+            goalItem.OnActiveChanged?.AddListener(isActive => UpdateGoalCount());
+        }
     }
 
     public void SetGoals(List<Goal> goals)
@@ -111,5 +119,22 @@ public class BingoGoalForm : MonoBehaviour
         }
         
         SetGoals(validGoals);
+    }
+
+    private void UpdateGoalCount()
+    {
+        if (goalCountText == null)
+            return;
+
+        var loadedGoals = GoalManager.GetAllGoals();
+        
+        var text = string.Format(
+            "<color={0}>{1}</color> / {2}",
+            GoalManager.ActiveGoalCount < BingoAPI.Bingo.Constants.BINGO_SIZE ? "red" : "green",
+            GoalManager.ActiveGoalCount,
+            loadedGoals.Count
+        );
+
+        goalCountText.text = text;
     }
 }
