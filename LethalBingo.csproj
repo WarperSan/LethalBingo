@@ -53,7 +53,7 @@
     <!-- Primary References -->
     <ItemGroup>
         <Reference Include="$(Game)\Lethal Company_Data\Managed\Assembly-CSharp.dll" />
-        <Reference Include="$(BepinEx)/WarperSan-BingoAPI\BingoAPI.dll" />
+        <Reference Include="$(PluginPath)\BingoAPI.dll" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
@@ -67,10 +67,11 @@
 
     <!-- BUILD EVENTS -->
     <Target Name="MoveDll" AfterTargets="Build" Condition="Exists('$(TargetDir)$(TargetName).dll')">
-        <Copy SourceFiles="$(TargetDir)$(TargetName).dll" DestinationFiles="$(PluginPath)/$(TargetName).dll"/>
+        <Copy SourceFiles="$(TargetDir)$(TargetName).dll" DestinationFiles="$(PluginPath)\$(TargetName).dll"/>
     </Target>
+    
     <Target Name="MoveBundle" AfterTargets="Build">
-        <Copy SourceFiles="$(ProjectDir)/Resources/lb-bundle" DestinationFiles="$(PluginPath)/lb-bundle"/>
+        <Copy SourceFiles="$(ProjectDir)/Resources/lb-bundle" DestinationFiles="$(PluginPath)/lb-bundle" SkipUnchangedFiles="true"/>
     </Target>
 
     <Import Project="../LC.targets"/>
