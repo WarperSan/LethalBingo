@@ -1,8 +1,9 @@
-﻿using BingoAPI.Managers;
-using BingoAPI.Models;
+﻿using BingoAPI.Models;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
+using Logger = LethalBingo.Helpers.Logger;
 
 #pragma warning disable CS0649
 
@@ -10,7 +11,7 @@ namespace LethalBingo.UI.Elements;
 
 public class GoalItemElement : MonoBehaviour
 {
-    private string GUID;
+    private string? GUID;
 
     private void Start()
     {
@@ -20,10 +21,14 @@ public class GoalItemElement : MonoBehaviour
     #region Fields
 
     [SerializeField] private TextMeshProUGUI? goalName;
+    
     [SerializeField] private Toggle? toggle;
+    
     [SerializeField] private Image? blackoutImage;
-
+    
     #endregion
+
+    public UnityEvent<bool>? OnActiveChanged; 
 
     /// <summary>
     /// Sets the information of this item from the given goal
@@ -44,9 +49,15 @@ public class GoalItemElement : MonoBehaviour
     
     private void ToggleGoal(bool isActive)
     {
+        if (GUID == null)
+        {
+            Logger.Info("Unset GUID for this goal.");
+            return;
+        }
+        
         if (blackoutImage != null)
             blackoutImage.enabled = !isActive;
         
-        GoalManager.SetActiveGoal(GUID, isActive);
+        OnActiveChanged?.Invoke(isActive);
     }
 }
