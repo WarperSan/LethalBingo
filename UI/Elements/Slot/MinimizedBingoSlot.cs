@@ -1,42 +1,37 @@
 using System.Collections.Generic;
 using BingoAPI.Models;
-using BingoAPI.Extensions;
-using TMPro;
+using LethalBingo.UI.Elements.Marking;
 using UnityEngine;
-using UnityEngine.UI;
 
 #pragma warning disable CS0649
 
-namespace LethalBingo.UI.Slots;
+namespace LethalBingo.UI.Elements.Slot;
 
-public class StandardBingoSquare : BingoSquare
+public class MinimizedBingoSlot : BaseBingoSlot
 {
     #region Fields
 
-    [Header("Fields")] [SerializeField] private TextMeshProUGUI? _text;
+    [Header("Fields")]
 
     [SerializeField] private Transform? _markings;
 
     [SerializeField] private GameObject? _markingPrefab;
-
+    
     #endregion
 
-    #region BingoSquare
+    #region BaseBingoSlot
 
     private Dictionary<Team, GameObject?>? cachedMarkings;
 
     /// <inheritdoc />
-    public override void DisplayText(string text)
-    {
-        _text?.SetText(text);
-    }
-
-    /// <inheritdoc />
-    public override void CacheMarkings(Team[] teams)
+    public override void CacheMarkings(Dictionary<Team, TeamIconInfo>? teams)
     {
         cachedMarkings = [];
 
-        foreach (var team in teams)
+        if (teams == null || teams.Count == 0)
+            return;
+        
+        foreach (var (team, teamInfo) in teams)
         {
             var newMark = Instantiate(_markingPrefab, _markings);
 
@@ -47,7 +42,12 @@ public class StandardBingoSquare : BingoSquare
 
             newMark.name = team.ToString();
             newMark.SetActive(false);
-            newMark.GetComponent<Image>().color = team.GetColor();
+
+            if (newMark.TryGetComponent(out BaseBingoMarking markingElement))
+            {
+                markingElement.SetIcon(teamInfo.Icon);
+                markingElement.SetColor(team);
+            }
         }
     }
 

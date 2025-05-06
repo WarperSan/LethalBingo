@@ -1,22 +1,17 @@
+using System.Collections.Generic;
 using BingoAPI.Models;
 using UnityEngine;
 
-namespace LethalBingo.UI.Slots;
+namespace LethalBingo.UI.Elements.Slot;
 
-public abstract class BingoSquare : MonoBehaviour
+public abstract class BaseBingoSlot : MonoBehaviour
 {
-    #region Text
-
-    public abstract void DisplayText(string text);
-
-    #endregion
-
     #region Markings
 
     /// <summary>
     ///     Caches the marking for all the given teams
     /// </summary>
-    public virtual void CacheMarkings(Team[] teams)
+    public virtual void CacheMarkings(Dictionary<Team, TeamIconInfo>? teams)
     {
     }
 

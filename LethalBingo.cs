@@ -1,8 +1,11 @@
+using System.Collections.Generic;
 using BepInEx;
 using BingoAPI.Bingo;
 using BingoAPI.Managers;
+using BingoAPI.Models;
 using HarmonyLib;
 using LethalBingo.Helpers;
+using LethalBingo.UI;
 using UnityEngine;
 
 namespace LethalBingo;
@@ -53,14 +56,25 @@ public class LethalBingo : BaseUnityPlugin
 
     public static GameObject? BINGO_MAIN_FORM_PREFAB;
     public static GameObject? BINGO_BOARD_PREFAB;
+    public static Dictionary<Team, TeamIconInfo>? BINGO_TEAM_ICON_INFO;
 
     private static void PreparePrefabs()
     {
         Helpers.Logger.Debug("Preparing prefabs...");
 
         BINGO_MAIN_FORM_PREFAB = Bundle.LoadAsset<GameObject>("BingoMainForm");
-        BINGO_BOARD_PREFAB = Bundle.LoadAsset<GameObject>("BingoBoard");
+        BINGO_BOARD_PREFAB = Bundle.LoadAsset<GameObject>("MinimizedBingoBoard");
 
+        var teamIconInfos = Bundle.LoadAllAsset<TeamIconInfo>();
+
+        if (teamIconInfos != null)
+        {
+            BINGO_TEAM_ICON_INFO = [];
+            
+            foreach (var teamIconInfo in teamIconInfos)
+                BINGO_TEAM_ICON_INFO[teamIconInfo.Team] = teamIconInfo;
+        }
+        
         Helpers.Logger.Debug("Finished preparing prefabs!");
     }
 

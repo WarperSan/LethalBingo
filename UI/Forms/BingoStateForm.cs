@@ -2,6 +2,7 @@
 using BingoAPI.Models;
 using BingoAPI.Extensions;
 using BingoAPI.Managers;
+using LethalBingo.UI.Elements;
 using UnityEngine;
 using UnityEngine.UI;
 

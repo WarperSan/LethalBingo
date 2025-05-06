@@ -1,7 +1,6 @@
 ﻿using BingoAPI.Models;
-using BingoAPI.Extensions;
 using BingoAPI.Managers;
-using LethalBingo.UI.Slots;
+using LethalBingo.UI.Elements.Slot;
 using UnityEngine;
 
 namespace LethalBingo.UI;
@@ -10,11 +9,7 @@ namespace LethalBingo.UI;
 
 public class BingoBoard : MonoBehaviour
 {
-    #region Squares
-
-    private BingoSquare?[]? squares;
-
-    #endregion
+    #region Unity
 
     private void Start()
     {
@@ -37,6 +32,16 @@ public class BingoBoard : MonoBehaviour
         ClientEventManager.OnOtherCleared.RemoveListener(OnSquareCleared);
     }
 
+    #endregion
+
+    #region Board
+
+    [SerializeField] private Transform? slotsParent;
+
+    [SerializeField] private GameObject? slotPrefab;
+    
+    private BaseBingoSlot?[]? squares;
+    
     private async void FetchBoard()
     {
         if (slotsParent == null)
@@ -50,9 +55,7 @@ public class BingoBoard : MonoBehaviour
         if (board == null)
             return;
 
-        var allTeams = TeamExtension.GetAllTeams();
-
-        squares = new BingoSquare[board.Length + 1];
+        squares = new BaseBingoSlot[board.Length + 1];
 
         foreach (Transform child in slotsParent)
             Destroy(child.gameObject);
@@ -60,27 +63,20 @@ public class BingoBoard : MonoBehaviour
         foreach (var square in board)
         {
             var newSlot = Instantiate(slotPrefab, slotsParent);
-
+            
             if (newSlot == null)
                 continue;
 
             newSlot.name = "Slot #" + square.Index;
 
-            if (newSlot.TryGetComponent(out BingoSquare slot))
+            if (newSlot.TryGetComponent(out BaseBingoSlot slot))
             {
-                slot.DisplayText(square.Name ?? "???");
-                slot.CacheMarkings(allTeams);
+                slot.CacheMarkings(LethalBingo.BINGO_TEAM_ICON_INFO);
                 slot.SetTeams(square.Teams);
                 squares[square.Index] = slot;
             }
         }
     }
-
-    #region Fields
-
-    [Header("Fields")] [SerializeField] private Transform? slotsParent;
-
-    [SerializeField] private GameObject? slotPrefab;
 
     #endregion
 

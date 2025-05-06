@@ -1,13 +1,13 @@
 ﻿using System.Globalization;
-using BingoAPI.Models;
 using BingoAPI.Extensions;
+using BingoAPI.Models;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 #pragma warning disable CS0649
 
-namespace LethalBingo.UI;
+namespace LethalBingo.UI.Elements;
 
 public class ColorElement : MonoBehaviour
 {

@@ -53,4 +53,24 @@ internal static class Bundle
 
         return asset;
     }
+    
+    /// <summary>
+    ///     Tries to load all the assets of the given type  in the current bundle
+    /// </summary>
+    /// <returns>Asset loaded or null</returns>
+    public static T[]? LoadAllAsset<T>() where T : Object
+    {
+        if (loadedBundle == null)
+        {
+            Logger.Error("Tried to load assets from unloaded bundle.");
+            return null;
+        }
+
+        var assets = loadedBundle.LoadAllAssets<T>();
+
+        if (assets == null)
+            Logger.Error($"No asset of type '{typeof(T)}' was found.");
+
+        return assets;
+    }
 }

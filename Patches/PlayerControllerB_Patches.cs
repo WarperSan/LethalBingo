@@ -17,7 +17,10 @@ internal class PlayerControllerB_Patches
         if (parent == null)
             return;
 
-        CreateBoard(parent);
+        if (LethalBingo.BINGO_BOARD_PREFAB == null)
+            return;
+
+        Object.Instantiate(LethalBingo.BINGO_BOARD_PREFAB, parent, false);
     }
 
     private static Transform? CreateBoardParent()
@@ -49,13 +52,5 @@ internal class PlayerControllerB_Patches
         rectTransform.offsetMax = Vector2.zero;
 
         return bingoParent.transform;
-    }
-
-    private static void CreateBoard(Transform parent)
-    {
-        if (LethalBingo.BINGO_BOARD_PREFAB is null)
-            return;
-
-        Object.Instantiate(LethalBingo.BINGO_BOARD_PREFAB, parent, false);
     }
 }
