@@ -11,27 +11,27 @@ public class MinimizedBingoMarking : BaseBingoMarking
 {
     #region Fields
 
-    [Header("Fields")]
-
-    [SerializeField] private Image? _icon;
+    [SerializeField] private Image? coloredIcon;
 
     #endregion
 
     /// <inheritdoc/>
     public override void SetIcon(Sprite? sprite)
     {
-        if (_icon == null)
-            return;
-
-        _icon.sprite = sprite;
+        if (coloredIcon != null)
+            coloredIcon.sprite = sprite;
     }
 
     /// <inheritdoc/>
     public override void SetColor(Team team)
     {
-        if (_icon == null)
-            return;
+        if (coloredIcon != null)
+            coloredIcon.color = team.GetColor();
+    }
 
-        _icon.color = team.GetColor();
+    /// <inheritdoc/>
+    public override void SetActive(bool isActive)
+    {
+        gameObject.SetActive(isActive);
     }
 }

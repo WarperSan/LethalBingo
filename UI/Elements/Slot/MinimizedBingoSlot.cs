@@ -21,7 +21,7 @@ public class MinimizedBingoSlot : BaseBingoSlot
 
     #region BaseBingoSlot
 
-    private Dictionary<Team, GameObject?>? cachedMarkings;
+    private Dictionary<Team, BaseBingoMarking?>? cachedMarkings;
 
     /// <inheritdoc />
     public override void CacheMarkings(Dictionary<Team, TeamIconInfo>? teams)
@@ -35,18 +35,17 @@ public class MinimizedBingoSlot : BaseBingoSlot
         {
             var newMark = Instantiate(_markingPrefab, _markings);
 
-            cachedMarkings[team] = newMark;
-
             if (newMark == null)
                 continue;
 
             newMark.name = team.ToString();
-            newMark.SetActive(false);
 
             if (newMark.TryGetComponent(out BaseBingoMarking markingElement))
             {
                 markingElement.SetIcon(teamInfo.Icon);
                 markingElement.SetColor(team);
+
+                cachedMarkings[team] = markingElement;
             }
         }
     }

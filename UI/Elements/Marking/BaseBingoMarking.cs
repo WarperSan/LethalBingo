@@ -14,4 +14,9 @@ public abstract class BaseBingoMarking : MonoBehaviour
     ///     Sets the color of this marking based on the given team
     /// </summary>
     public abstract void SetColor(Team team);
+
+    /// <summary>
+    ///     Sets this marking's activeness to the given activeness
+    /// </summary>
+    public abstract void SetActive(bool isActive);
 }
